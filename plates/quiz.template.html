@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Should you hire me?</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#0a0a0a}
+  .layout{display:flex;height:100vh;width:100vw}
+  .qp{width:50%;background:#FAFAF8;display:flex;flex-direction:column;justify-content:center;align-items:center;overflow:hidden;position:relative}
+  .qw{width:100%;max-width:440px;padding:0 40px}
+  .qc{font-size:12px;font-weight:600;color:#8a8a86;letter-spacing:.1em;text-transform:uppercase;margin-bottom:32px}
+  .qs{transition:opacity .35s ease,transform .35s ease}
+  .qs.out{opacity:0;transform:translateY(-12px)}
+  .qs.in{opacity:0;transform:translateY(12px)}
+  .qt{font-size:22px;font-weight:700;color:#1a1a1a;line-height:1.35;letter-spacing:-.3px;margin-bottom:28px;min-height:66px}
+  .rr{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .pl{font-size:13px;color:#6f6f6b;font-weight:500;line-height:1.25;min-width:64px;max-width:80px}
+  .pl.r{text-align:right}
+  .rb-wrap{display:flex;gap:10px;align-items:center;flex:1;justify-content:center}
+  .rb{width:40px;height:40px;border-radius:50%;border:2px solid #e0e0e0;background:#fff;cursor:pointer;font-size:14px;font-weight:600;color:#999;display:flex;align-items:center;justify-content:center;transition:transform .15s ease,border-color .2s ease,background .2s ease,color .2s ease,box-shadow .2s ease;user-select:none;flex-shrink:0}
+  .rb:hover{transform:scale(1.12);border-color:#ccc;color:#666;background:#f8f8f6}
+  .rb:active{transform:scale(.95)}
+  .rb.sel{background:#2a2a2a;border-color:#2a2a2a;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .bb-wrap{display:flex;gap:14px;justify-content:center}
+  .bb{padding:10px 32px;border-radius:24px;border:2px solid #e0e0e0;background:#fff;font-size:14px;font-weight:600;color:#888;cursor:pointer;transition:transform .15s ease,border-color .2s ease,background .2s ease,color .2s ease,box-shadow .2s ease;user-select:none}
+  .bb:hover{transform:scale(1.05);border-color:#ccc;color:#555;background:#f8f8f6}
+  .bb:active{transform:scale(.96)}
+  .bb.sel{background:#2a2a2a;border-color:#2a2a2a;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .pr{display:flex;gap:8px;justify-content:center;margin-top:36px}
+  .pd{width:8px;height:8px;border-radius:50%;background:#e0e0e0;transition:background .3s,transform .3s;cursor:default}
+  .pd.done{background:#bbb;cursor:pointer}
+  .pd.cur{background:#2a2a2a;transform:scale(1.25)}
+  .lp{width:50%;position:relative;overflow:hidden;background:#000}
+  #gl{display:block;width:100%;height:100%}
+  #ml{position:absolute;bottom:24px;left:24px;color:rgba(255,255,255,.85);font-size:14px;font-weight:500;letter-spacing:.03em;text-shadow:0 1px 12px rgba(0,0,0,.95);pointer-events:none;z-index:15}
+  #dbg{position:absolute;right:16px;bottom:20px;z-index:20;display:none;align-items:center;gap:8px;color:#fff;font:12px ui-monospace,monospace;text-shadow:0 1px 6px #000}
+  body.shot .qp{display:none} body.shot .lp{width:100%} body.shot #ml{display:none}
+  @media (max-width:760px){
+    .layout{flex-direction:column-reverse}
+    .qp,.lp{width:100%} .lp{height:42vh;flex-shrink:0} .qp{flex:1}
+    .qw{padding:0 16px} .qt{font-size:20px;min-height:0} .rb{width:36px;height:36px} .rb-wrap{gap:6px} .pl{min-width:52px;font-size:12px}
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="qp">
+    <div class="qw">
+      <div class="qc" id="qc">1 of 7</div>
+      <div class="qs" id="qs">
+        <div class="qt" id="qt"></div>
+        <div id="rr"></div>
+      </div>
+      <div class="pr" id="pr"></div>
+    </div>
+  </div>
+  <div class="lp" id="lp">
+    <canvas id="gl"></canvas>
+    <label id="dbg">mood <input id="dbgr" type="range" min="0" max="1" step="0.01"><span id="dbgv"></span></label>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   QUIZ
+   ============================================================ */
+const questions = [
+  { text: "Are you looking for more of a designer than an engineer?", type: "scale", low: "Pure engineer", high: "Pure designer", scoring: "bell" },
+  { text: "Are you looking for someone fun and a little sarcastic?", type: "scale", low: "Absolutely not", high: "The more the better", scoring: "standard" },
+  { text: "Do you want someone to focus on a single task for 6 months?", type: "scale", low: "No, variety is key", high: "Yes, deep focus only", scoring: "inverted" },
+  { text: "Is your team fixed on certain tools and not flexible?", type: "scale", low: "No, we're open", high: "Yes, locked in", scoring: "inverted" },
+  { text: "Do you have flexible working hours and trust your people to deliver?", type: "scale", low: "No, strict hours", high: "Yes, results matter", scoring: "standard" },
+  { text: "Do you want to see growth from your designers and let them explore?", type: "scale", low: "No, stay in your lane", high: "Yes, always", scoring: "standard" },
+  { text: "Are you based in Europe?", type: "binary", scoring: "standard" },
+];
+const params = new URLSearchParams(location.search);
+if (params.has('shot')) document.body.classList.add('shot');
+const answers = new Array(questions.length).fill(null);
+let curQ = 0, transitioning = false;
+let targetMood = params.has('mood') ? +params.get('mood') : .5;  // start in the middle
+let animMood = targetMood;
+const counterEl = document.getElementById('qc'), slideEl = document.getElementById('qs'), textEl = document.getElementById('qt'), rowEl = document.getElementById('rr'), progressEl = document.getElementById('pr');
+questions.forEach((_, i) => { const d = document.createElement('div'); d.className = 'pd'; d.addEventListener('click', () => { if (!transitioning && answers[i] !== null) goTo(i); }); progressEl.appendChild(d); });
+function renderQ(qi) {
+  const q = questions[qi]; counterEl.textContent = `${qi + 1} of ${questions.length}`; textEl.textContent = q.text; rowEl.innerHTML = '';
+  if (q.type === 'binary') {
+    const w = document.createElement('div'); w.className = 'bb-wrap';
+    ['No', 'Yes'].forEach((l, bi) => { const b = document.createElement('button'); b.className = 'bb'; b.textContent = l; const v = bi === 0 ? 1 : 5; if (answers[qi] === v) b.classList.add('sel'); b.addEventListener('click', () => onRate(qi, v)); w.appendChild(b); });
+    rowEl.appendChild(w);
+  } else {
+    const row = document.createElement('div'); row.className = 'rr';
+    const lo = document.createElement('span'); lo.className = 'pl'; lo.textContent = q.low; row.appendChild(lo);
+    const bw = document.createElement('div'); bw.className = 'rb-wrap';
+    for (let v = 1; v <= 5; v++) { const b = document.createElement('button'); b.className = 'rb'; b.textContent = v; b.setAttribute('aria-label', `${v} of 5`); if (answers[qi] === v) b.classList.add('sel'); b.addEventListener('click', () => onRate(qi, v)); bw.appendChild(b); }
+    row.appendChild(bw);
+    const hi = document.createElement('span'); hi.className = 'pl r'; hi.textContent = q.high; row.appendChild(hi); rowEl.appendChild(row);
+  }
+  updateDots();
+}
+function updateDots() { const dots = progressEl.children; for (let i = 0; i < dots.length; i++) { dots[i].className = 'pd'; if (i === curQ) dots[i].classList.add('cur'); else if (answers[i] !== null) dots[i].classList.add('done'); } }
+function goTo(qi) { if (transitioning) return; transitioning = true; slideEl.classList.add('out'); setTimeout(() => { curQ = qi; renderQ(qi); slideEl.classList.remove('out'); slideEl.classList.add('in'); requestAnimationFrame(() => requestAnimationFrame(() => { slideEl.classList.remove('in'); transitioning = false; })); }, 300); }
+function fitScore(v, s) { const n = (v - 1) / 4; if (s === 'inverted') return 1 - n; if (s === 'bell') return 1 - Math.abs(v - 3) / 2; return n; }
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+function onRate(qi, value) {
+  if (transitioning) return; answers[qi] = value;
+  rowEl.querySelectorAll('.rb,.bb').forEach(btn => { btn.classList.remove('sel'); const m = btn.classList.contains('bb') ? (btn.textContent === 'Yes' && value === 5) || (btn.textContent === 'No' && value === 1) : parseInt(btn.textContent) === value; if (m) btn.classList.add('sel'); });
+  const scores = answers.map((a, i) => a !== null ? fitScore(a, questions[i].scoring) : null).filter(a => a !== null);
+  // each answer nudges the scene by at most 1/14 either way; all 7 perfect = 1, all wrong = 0
+  targetMood = clamp(.5 + scores.reduce((s, a) => s + (a - .5), 0) / questions.length, 0, 1);
+  if (qi < questions.length - 1) setTimeout(() => { if (curQ === qi) goTo(qi + 1); }, 550);
+}
+renderQ(0);
+function getMoodText(m) { if (m > .88) return "A perfect summer's day"; if (m > .68) return "Looking promising"; if (m > .56) return "Brightening up"; if (m > .44) return "Could go either way"; if (m > .32) return "The wind is picking up"; if (m > .18) return "The outlook is grim"; if (m > .06) return "You have chosen poorly"; return "Abandon all hope"; }
+const dbg = document.getElementById('dbg'), dbgr = document.getElementById('dbgr'), dbgv = document.getElementById('dbgv');
+if (params.has('debug')) { dbg.style.display = 'flex'; dbgr.value = targetMood; dbgr.addEventListener('input', () => { targetMood = +dbgr.value; }); }
+
+/* ============================================================
+   PLATES: one photographic frame per mood, same composition.
+   Each carries the live effects layered on top of it.
+   sun = sun position in image UV (0..1, y down) for light rays
+   ============================================================ */
+const PLATES = [
+  { m: 0.00, src: '%%p00%%', lava: 1,  embers: 1,  leaves: 0,  ash: .5, motes: 0,  wind: .25, shadow: 0,   rays: 0,  flash: .22, cloud: .6, sun: [.5, .1] },
+  { m: 0.12, src: '%%p12%%', exp: .85, lava: 0,  embers: .35, leaves: 0, ash: 1,  motes: 0,  wind: .35, shadow: 0,   rays: .5, flash: 0,   cloud: .4, sun: [.79, .37] },
+  { m: 0.32, src: '%%p30%%', exp: .72, lava: 0,  embers: 0,  leaves: 1,  ash: 0,  motes: 0,  wind: 1.1, shadow: .15, rays: 0,  flash: .3,  cloud: 1,  sun: [.5, .1] },
+  { m: 0.55, src: '%%p55%%', exp: .92, lava: 0,  embers: 0,  leaves: .35, ash: 0, motes: 0,  wind: 1.3, shadow: .7,  rays: .35, flash: .08, cloud: 1.3, sun: [.86, .2] },
+  { m: 0.76, src: '%%p75%%', lava: 0,  embers: 0,  leaves: 0,  ash: 0,  motes: 1,  wind: .45, shadow: .25, rays: .8, flash: 0,   cloud: .5, sun: [.98, .3] },
+  { m: 1.00, src: '%%p100%%', lava: 0, embers: 0,  leaves: 0,  ash: 0,  motes: .25, wind: .35, shadow: .45, rays: .25, flash: 0, cloud: .5, sun: [.75, .02] },
+];
+const FX = ['lava', 'embers', 'leaves', 'ash', 'motes', 'wind', 'shadow', 'rays', 'flash', 'cloud'];
+
+/* ============================================================
+   WEBGL COMPOSITOR
+   ============================================================ */
+const panel = document.getElementById('lp'), canvas = document.getElementById('gl');
+const gl = canvas.getContext('webgl', { antialias: false, premultipliedAlpha: false });
+const VS = `attribute vec2 p; void main(){ gl_Position = vec4(p,0.,1.); }`;
+const FS = `
+precision highp float;
+uniform sampler2D uA, uB;
+uniform vec2 uRes, uSunA, uSunB;
+uniform float uMix, uTime, uFlash, uExp, uSat, uDpr;
+uniform float aLava,aEmbers,aLeaves,aAsh,aMotes,aWind,aShadow,aRays,aCloud;
+uniform float bLava,bEmbers,bLeaves,bAsh,bMotes,bWind,bShadow,bRays,bCloud;
+
+float h21(vec2 p){ vec3 p3=fract(vec3(p.xyx)*.1031); p3+=dot(p3,p3.yzx+33.33); return fract((p3.x+p3.y)*p3.z); }
+vec2 h22(vec2 p){ return vec2(h21(p), h21(p+17.31)); }
+float vn(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
+  return mix(mix(h21(i),h21(i+vec2(1,0)),u.x), mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),u.x), u.y); }
+float fbm(vec2 p){ float a=.5,s=0.; for(int i=0;i<5;i++){ s+=a*vn(p); p=mat2(1.6,1.2,-1.2,1.6)*p; a*=.5; } return s; }
+
+// cover-fit the square plate into the panel, centred slightly low so the peaks stay in frame
+vec2 coverUV(vec2 fc){
+  vec2 uv = fc/uRes; uv.y = 1.-uv.y;
+  float ar = uRes.x/uRes.y;
+  if(ar>1.){ uv.y = (uv.y-.5)/ar + .5; } else { uv.x = (uv.x-.5)*ar + .5; }
+  return uv;
+}
+
+vec3 plate(sampler2D t, vec2 uv, float wind, float cloud, float lava, float T, float blur){
+  float sky = smoothstep(.5,.3,uv.y);
+  float ground = smoothstep(.5,.75,uv.y);
+  vec2 d = vec2(0.);
+  // clouds churn slowly
+  d += (vec2(fbm(uv*vec2(3.,5.)+vec2(T*.02,0.)), fbm(uv*vec2(3.,5.)+vec2(5.2,T*.015)))-.5)*.006*cloud*sky;
+  // wind through the grass: travelling gusts, stronger near camera
+  float gust = fbm(vec2(uv.x*2.-T*.35*wind, uv.y*3.));
+  d.x += sin(uv.y*220.+T*3.*wind+gust*8.)*.0011*wind*ground*(uv.y-.5)*2.*(.4+gust);
+  d.x += (gust-.45)*.004*wind*ground*(uv.y-.5);
+  // heat shimmer over the lava
+  if(lava>0.){
+    vec3 c0 = texture2D(t, uv).rgb;
+    float hot = smoothstep(.1,.4,c0.r-c0.g)*smoothstep(.3,.7,c0.r);
+    float above = 0.;
+    for(int i=1;i<4;i++){ vec3 c1 = texture2D(t, uv+vec2(0.,.02*float(i))).rgb; above = max(above, smoothstep(.1,.4,c1.r-c1.g)*smoothstep(.3,.7,c1.r)); }
+    d += (vec2(vn(uv*60.+vec2(0.,T*2.)), vn(uv*60.+vec2(9.,T*2.3)))-.5)*.004*lava*max(hot,above);
+  }
+  vec2 s = uv+d;
+  if(blur<.0002) return texture2D(t, s).rgb;
+  vec3 c = texture2D(t, s).rgb*.28;
+  c += texture2D(t, s+vec2( blur, 0.)).rgb*.18 + texture2D(t, s+vec2(-blur, 0.)).rgb*.18;
+  c += texture2D(t, s+vec2(0.,  blur)).rgb*.18 + texture2D(t, s+vec2(0., -blur)).rgb*.18;
+  return c;
+}
+
+// sparse particle field: cells of size 1/sc, each with one particle
+float particles(vec2 uv, float sc, float T, vec2 vel, float sway, float sz, float seed, out vec3 tintOut){
+  float acc = 0.; tintOut = vec3(0.);
+  vec2 p = uv*sc - vel*T;
+  vec2 id = floor(p);
+  for(int j=-1;j<=1;j++) for(int i=-1;i<=1;i++){
+    vec2 c = id+vec2(i,j);
+    vec2 r = h22(c+seed);
+    if(r.x>.55) continue;
+    vec2 pos = c + .5 + (r-.5)*.8;
+    pos.x += sin(T*1.7*(.5+r.y)+r.x*30.)*sway;
+    vec2 q = p-pos;
+    float a = T*(1.+2.*r.y)+r.x*6.;
+    q = mat2(cos(a),sin(a),-sin(a),cos(a))*q;
+    q.y *= 1.+1.5*abs(sin(a*.7));   // tumbling flat shapes
+    float m = smoothstep(sz, sz*.4, length(q));
+    acc = max(acc, m); tintOut = mix(tintOut, vec3(r.x, r.y, h21(c+3.)), m);
+  }
+  return acc;
+}
+
+vec3 effects(vec3 col, vec2 uv, float T,
+  float lava, float embers, float leaves, float ash, float motes, float shadow, float rays, vec2 sun, sampler2D t){
+  float ground = smoothstep(.48,.7,uv.y);
+  // drifting cloud shadows across the meadow
+  float cs = smoothstep(.42,.72, fbm(uv*vec2(1.6,4.)+vec2(T*.018,0.)));
+  col *= 1.-shadow*ground*cs*.4;
+  // god rays from the sun position: radial blur of the bright sky
+  if(rays>0.){
+    vec2 dir = (sun-uv)/12.; vec2 s = uv; float acc = 0.;
+    for(int i=0;i<12;i++){ s += dir; vec3 c = texture2D(t, s).rgb; acc += smoothstep(.6,1.,dot(c,vec3(.333))); }
+    col += vec3(1.,.82,.55)*acc/12.*rays*.35*(.85+.15*sin(T*.4));
+  }
+  // lava: pulsing glow + bloom
+  if(lava>0.){
+    float hot = smoothstep(.1,.45,col.r-col.g*1.1)*smoothstep(.3,.75,col.r);
+    float pulse = .75+.25*sin(T*1.8+fbm(uv*12.+T*.2)*6.);
+    col += col*hot*lava*pulse*.45;
+    vec3 bl = vec3(0.);
+    for(int i=0;i<8;i++){ float a = float(i)*.785; vec2 o = vec2(cos(a),sin(a))*.018; vec3 c = texture2D(t, uv+o).rgb; bl += c*smoothstep(.15,.5,c.r-c.g); }
+    col += bl/8.*vec3(1.,.3,.08)*lava*.7*pulse;
+  }
+  vec3 tt;
+  // rising embers
+  if(embers>0.){
+    float e = particles(uv, 26., T, vec2(.05,.55), .25, .07, 1., tt);
+    float e2 = particles(uv, 55., T, vec2(.08,.8), .3, .08, 7., tt);
+    float fl = .6+.4*sin(T*9.+uv.x*80.);
+    col += vec3(1.,.35,.06)*(e+e2*.6)*embers*fl*1.4*smoothstep(0.,.4,uv.y);
+  }
+  // falling ash
+  if(ash>0.){
+    float a = particles(uv, 30., T, vec2(.06,-.12), .5, .09, 3., tt);
+    col = mix(col, vec3(.35,.33,.32)*(.5+.5*tt.x), a*ash*.7);
+  }
+  // leaves tumbling down
+  if(leaves>0.){
+    float l = particles(uv, 14., T, vec2(.18,-.22), .6, .11, 5., tt);
+    float l2 = particles(uv, 24., T, vec2(.12,-.16), .5, .1, 11., tt);
+    vec3 lc = mix(vec3(.45,.24,.07), vec3(.3,.18,.08), tt.x);
+    col = mix(col, lc*(.55+.45*tt.y), max(l,l2*.8)*leaves*step(tt.z,.95));
+  }
+  // dust motes in the golden light
+  if(motes>0.){
+    float m = particles(uv, 40., T, vec2(.02,-.03), .4, .05, 9., tt);
+    col += vec3(1.,.85,.55)*m*motes*.35*(.5+.5*sin(T*2.+tt.x*20.));
+  }
+  return col;
+}
+
+void main(){
+  vec2 uv = coverUV(gl_FragCoord.xy);
+  float T = uTime;
+  // smooth crossfade; a touch of softness mid-blend hides the plates not lining up exactly
+  float m = uMix;
+  float blur = sin(3.14159*m)*.0035;
+  vec3 a = plate(uA, uv, aWind, aCloud, aLava, T, blur);
+  vec3 b = plate(uB, uv, bWind, bCloud, bLava, T, blur);
+  a = effects(a, uv, T, aLava, aEmbers, aLeaves, aAsh, aMotes, aShadow, aRays, uSunA, uA);
+  b = effects(b, uv, T, bLava, bEmbers, bLeaves, bAsh, bMotes, bShadow, bRays, uSunB, uB);
+  vec3 col = mix(a, b, m);
+  // lightning: sky lights up from behind the clouds
+  float sky = smoothstep(.55,.2,uv.y);
+  col += uFlash*(vec3(.55,.6,.8)*sky*(.5+fbm(uv*4.)) + col*1.4);
+  // grade: subtle continuous drift between plates
+  col *= uExp;
+  float l = dot(col, vec3(.2126,.7152,.0722));
+  col = mix(vec3(l), col, uSat);
+  // lens: vignette, slight edge chroma, grain
+  vec2 q = gl_FragCoord.xy/uRes-.5;
+  col *= 1.-dot(q,q)*.55;
+  // film grain: 24fps, clumpy (two scales), strongest in shadows and midtones, slightly per-channel
+  float fr = floor(T*24.);
+  vec2 gp = gl_FragCoord.xy/uDpr;   // grain sized in CSS pixels so it reads on retina too
+  float g1 = (vn(gp/1.2 + fr*37.17) - .5)*1.6;
+  float g2 = h21(gp + fr*91.3) - .5;
+  vec3 gc = vec3(g1*.7 + g2*.45);
+  gc += (vec3(h21(gp+fr*3.1), h21(gp+fr*5.3), h21(gp+fr*7.9)) - .5)*.18;
+  float lum = dot(col, vec3(.2126,.7152,.0722));
+  col += gc * .07 * (1. - .5*lum);
+  col = mix(vec3(lum), col, .94);   // ease off the over-clean AI saturation a hair
+  gl_FragColor = vec4(clamp(col,0.,1.),1.);
+}`;
+function sh(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s)); return s; }
+const prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog); gl.useProgram(prog);
+const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+const u = {}; ['uA', 'uB', 'uRes', 'uDpr', 'uSunA', 'uSunB', 'uMix', 'uTime', 'uFlash', 'uExp', 'uSat', ...FX.flatMap(k => ['a' + k[0].toUpperCase() + k.slice(1), 'b' + k[0].toUpperCase() + k.slice(1)])].forEach(n => u[n] = gl.getUniformLocation(prog, n));
+gl.uniform1i(u.uA, 0); gl.uniform1i(u.uB, 1);
+
+const textures = PLATES.map(() => null);
+let loaded = 0;
+PLATES.forEach((p, i) => {
+  const img = new Image();
+  img.onload = () => {
+    const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    textures[i] = t; loaded++;
+  };
+  img.src = p.src;
+});
+
+function resize() { const d = Math.min(devicePixelRatio, 2); canvas.width = Math.round(panel.clientWidth * d); canvas.height = Math.round(panel.clientHeight * d); gl.viewport(0, 0, canvas.width, canvas.height); }
+new ResizeObserver(resize).observe(panel); resize();
+
+/* ============================================================
+   LOOP: the mood drifts slowly; the plate changes with a slow
+   organic dissolve; exposure keeps drifting between plates.
+   ============================================================ */
+const nearest = m => PLATES.reduce((bi, p, i) => Math.abs(p.m - m) < Math.abs(PLATES[bi].m - m) ? i : bi, 0);
+let pos = nearest(animMood), vel = 0;   // position along the plate list (fractional = mid-blend)
+const OMEGA = .9;                         // lower = slower, smoother glide
+const moodLabel = document.getElementById('ml'); let lastLabel = '';
+let last = performance.now(), T = 0, nextStrike = 3, strikeT = -10;
+function frame(now) {
+  const dt = Math.min((now - last) / 1000, .05); last = now; T += dt;
+  animMood += (targetMood - animMood) * (1 - Math.exp(-dt / 4.5));
+  if (params.has('debug')) dbgv.textContent = animMood.toFixed(2);
+  const lt = getMoodText(animMood); if (lt !== lastLabel) { moodLabel.textContent = lt; lastLabel = lt; }
+
+  // glide continuously through every stage toward the nearest plate, settling exactly on it
+  const target = nearest(animMood);
+  vel += (OMEGA * OMEGA * (target - pos) - 2 * OMEGA * vel) * dt;
+  pos += vel * dt;
+  if (Math.abs(target - pos) < .001 && Math.abs(vel) < .001) { pos = target; vel = 0; }
+  pos = clamp(pos, 0, PLATES.length - 1);
+  const i0 = Math.min(Math.floor(pos), PLATES.length - 2), e = pos - i0;
+  const A = PLATES[i0], B = PLATES[i0 + 1];
+
+  // continuous drift: darker as it gets worse, even within a plate
+  const off = clamp(animMood - lerp(A.m, B.m, e), -.15, .15);
+  const exp = lerp(A.exp ?? 1, B.exp ?? 1, e) * (1 + off * 1.1);
+  const sat = 1 + off * .9;
+
+  // lightning
+  const flashAmt = lerp(A.flash, B.flash, e);
+  if (flashAmt > .02 && T > nextStrike) { strikeT = T; nextStrike = T + (2 + Math.random() * 7) / (flashAmt * 3); }
+  const st = T - strikeT;
+  const flash = st >= 0 && st < 1 ? Math.max(Math.exp(-st * 16), st > .12 ? .6 * Math.exp(-(st - .12) * 12) : 0, st > .3 ? .4 * Math.exp(-(st - .3) * 9) : 0) * clamp(flashAmt * 2.5, 0, 1) * .6 : 0;
+
+  if (textures[i0] && textures[i0 + 1]) {
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, textures[i0]);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, textures[i0 + 1]);
+    gl.uniform2f(u.uRes, canvas.width, canvas.height); gl.uniform1f(u.uDpr, canvas.width / panel.clientWidth);
+    gl.uniform1f(u.uMix, e); gl.uniform1f(u.uTime, T); gl.uniform1f(u.uFlash, flash);
+    gl.uniform1f(u.uExp, exp); gl.uniform1f(u.uSat, sat);
+    gl.uniform2fv(u.uSunA, A.sun); gl.uniform2fv(u.uSunB, B.sun);
+    for (const k of FX) { const K = k[0].toUpperCase() + k.slice(1); gl.uniform1f(u['a' + K], A[k]); gl.uniform1f(u['b' + K], B[k]); }
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

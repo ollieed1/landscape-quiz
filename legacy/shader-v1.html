@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Should you hire me?</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#0a0a0a}
+  .layout{display:flex;height:100vh;width:100vw}
+  .qp{width:50%;background:#FAFAF8;display:flex;flex-direction:column;justify-content:center;align-items:center;overflow:hidden;position:relative}
+  .qw{width:100%;max-width:420px;padding:0 40px}
+  .qc{font-size:11px;font-weight:500;color:#b0b0b0;letter-spacing:.1em;text-transform:uppercase;margin-bottom:32px}
+  .qs{transition:opacity .35s ease,transform .35s ease}
+  .qs.out{opacity:0;transform:translateY(-12px)}
+  .qs.in{opacity:0;transform:translateY(12px)}
+  .qt{font-size:22px;font-weight:700;color:#1a1a1a;line-height:1.35;letter-spacing:-.3px;margin-bottom:28px;min-height:66px}
+  .rr{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .pl{font-size:11px;color:#aaa;font-weight:400;white-space:nowrap;min-width:50px}
+  .pl.r{text-align:right}
+  .rb-wrap{display:flex;gap:10px;align-items:center;flex:1;justify-content:center}
+  .rb{width:40px;height:40px;border-radius:50%;border:2px solid #e0e0e0;background:#fff;cursor:pointer;font-size:14px;font-weight:600;color:#bbb;display:flex;align-items:center;justify-content:center;transition:transform .15s ease,border-color .2s ease,background .2s ease,color .2s ease,box-shadow .2s ease;user-select:none;flex-shrink:0}
+  .rb:hover{transform:scale(1.12);border-color:#ccc;color:#888;background:#f8f8f6}
+  .rb:active{transform:scale(.95)}
+  .rb.sel{background:#2a2a2a;border-color:#2a2a2a;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .bb-wrap{display:flex;gap:14px;justify-content:center}
+  .bb{padding:10px 32px;border-radius:24px;border:2px solid #e0e0e0;background:#fff;font-size:14px;font-weight:600;color:#999;cursor:pointer;transition:transform .15s ease,border-color .2s ease,background .2s ease,color .2s ease,box-shadow .2s ease;user-select:none}
+  .bb:hover{transform:scale(1.05);border-color:#ccc;color:#666;background:#f8f8f6}
+  .bb:active{transform:scale(.96)}
+  .bb.sel{background:#2a2a2a;border-color:#2a2a2a;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  .pr{display:flex;gap:8px;justify-content:center;margin-top:36px}
+  .pd{width:8px;height:8px;border-radius:50%;background:#e0e0e0;transition:background .3s,transform .3s;cursor:default}
+  .pd.done{background:#bbb;cursor:pointer}
+  .pd.cur{background:#2a2a2a;transform:scale(1.25)}
+  .lp{width:50%;position:relative;overflow:hidden;background:#030306}
+  #gl{display:block;width:100%;height:100%}
+  #ml{position:absolute;bottom:24px;left:24px;color:rgba(255,255,255,.55);font-size:13px;font-weight:500;letter-spacing:.03em;text-shadow:0 1px 12px rgba(0,0,0,.95);pointer-events:none;z-index:15}
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="qp">
+    <div class="qw">
+      <div class="qc" id="qc">1 of 7</div>
+      <div class="qs" id="qs">
+        <div class="qt" id="qt"></div>
+        <div id="rr"></div>
+      </div>
+      <div class="pr" id="pr"></div>
+    </div>
+  </div>
+  <div class="lp" id="lp">
+    <canvas id="gl"></canvas>
+    <div id="ml"></div>
+  </div>
+</div>
+
+<script id="vs" type="x-shader/x-vertex">
+attribute vec2 a;
+void main(){gl_Position=vec4(a,0,1);}
+</script>
+
+<script id="fs" type="x-shader/x-fragment">
+precision highp float;
+uniform vec2 R;
+uniform float T,M,MX,MY;
+
+// ── Mood interpolation (5 stops: 0, .25, .5, .75, 1) ──
+vec3 mc(vec3 a,vec3 b,vec3 c,vec3 d,vec3 e,float m){
+  return m<.25?mix(a,b,m/.25):m<.5?mix(b,c,(m-.25)/.25):m<.75?mix(c,d,(m-.5)/.25):mix(d,e,(m-.75)/.25);
+}
+float mf(float a,float b,float c,float d,float e,float m){
+  return m<.25?mix(a,b,m/.25):m<.5?mix(b,c,(m-.25)/.25):m<.75?mix(c,d,(m-.5)/.25):mix(d,e,(m-.75)/.25);
+}
+
+// ── Noise ──
+float h2(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float no(vec2 p){
+  vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+  return mix(mix(h2(i),h2(i+vec2(1,0)),f.x),mix(h2(i+vec2(0,1)),h2(i+vec2(1,1)),f.x),f.y);
+}
+mat2 Ro=mat2(.8,.6,-.6,.8);
+float fb(vec2 p){float v=0.,a=.5;for(int i=0;i<6;i++){v+=a*no(p);p=Ro*p*2.+100.;a*=.5;}return v;}
+float fb5(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*no(p);p=Ro*p*2.+100.;a*=.5;}return v;}
+float fb4(vec2 p){float v=0.,a=.5;for(int i=0;i<4;i++){v+=a*no(p);p=Ro*p*2.+100.;a*=.5;}return v;}
+float fb3(vec2 p){float v=0.,a=.5;for(int i=0;i<3;i++){v+=a*no(p);p=Ro*p*2.+100.;a*=.5;}return v;}
+
+// ── Mountain profile: dramatic alpine peaks ──
+float mtProf(float x){
+  float h=0.;
+  // Main peak cluster (gaussian-shaped peaks)
+  h+=exp(-pow((x+.08)*1.4,2.))*.32;     // central dominant peak
+  h+=exp(-pow((x-.55)*1.8,2.))*.20;     // right peak
+  h+=exp(-pow((x+.7)*1.6,2.))*.17;      // left peak
+  h+=exp(-pow((x-1.1)*2.2,2.))*.11;     // far right ridge
+  h+=exp(-pow((x+1.3)*2.0,2.))*.09;     // far left ridge
+  // Ridgeline noise (jagged rocky detail)
+  h+=(fb5(vec2(x*4.+5.,.5))-.5)*.07;
+  h+=(fb3(vec2(x*10.+13.,1.))-.5)*.028;
+  h+=(no(vec2(x*20.+7.,1.5))-.5)*.012;
+  // Base saddle
+  h+=.015;
+  return max(h,0.);
+}
+
+// ── Near hills: rolling, with tree bumps ──
+float hillProf(float x){
+  float h=sin(x*1.8+.5)*.035+sin(x*4.+2.)*.018;
+  h+=fb4(vec2(x*3.,2.))*.04;
+  // Tree silhouette bumps
+  h+=max(0.,no(vec2(x*12.,4.))-.48)*.045;
+  h+=max(0.,no(vec2(x*20.,5.))-.52)*.025;
+  return h-.11;
+}
+
+// ── Foreground grass lines ──
+float grassProf(float x){
+  return sin(x*3.)*.018+no(vec2(x*5.,3.))*.015-.26;
+}
+float nearGrassProf(float x){
+  return -.40+no(vec2(x*15.,.5))*.07+no(vec2(x*45.,1.))*.035+no(vec2(x*90.,1.5))*.018;
+}
+
+void main(){
+  vec2 uv=gl_FragCoord.xy/R;
+  vec2 p=(gl_FragCoord.xy*2.-R)/R.y;
+  float m=M;
+
+  // ── View: sitting on grass, looking up. Horizon in lower third. ──
+  float vy=p.y+.38+MY*.04;  // horizon at ~28% from bottom
+  float vx=p.x;
+
+  // ── Parallax offsets per layer depth ──
+  float fmx=vx+MX*.02;   // far mountain (subtle)
+  float nhx=vx+MX*.05;   // near hills
+  float fgx=vx+MX*.08;   // foreground
+  float ngx=vx+MX*.13;   // near grass (most movement)
+
+  // ── Compute layer profiles ──
+  float farMtH=mtProf(fmx);
+  float nearHillH=hillProf(nhx);
+  float grassH=grassProf(fgx);
+  float nearGrassH=nearGrassProf(ngx);
+
+  // ── Sun ──
+  vec3 sd=normalize(vec3(mix(-.5,.5,m),mix(.1,.55,m),-.7));
+  vec3 sc=mc(vec3(.10,.02,.01),vec3(.92,.20,.04),vec3(.5,.5,.5),vec3(1.,.92,.72),vec3(1.,.97,.92),m);
+  float si=mf(.2,.6,.3,.85,1.1,m);
+
+  // ════════════════════════════════════════════════════════
+  // LAYER 0: SKY
+  // ════════════════════════════════════════════════════════
+  // Zenith
+  vec3 skyZ=mc(
+    vec3(.012,.006,.010),
+    vec3(.05,.018,.018),
+    vec3(.05,.06,.11),
+    vec3(.06,.20,.50),
+    vec3(.04,.24,.68)     // vivid deep blue
+  ,m);
+  // Mid sky
+  vec3 skyM=mc(
+    vec3(.04,.015,.015),
+    vec3(.20,.06,.03),
+    vec3(.08,.10,.16),
+    vec3(.12,.32,.60),
+    vec3(.10,.38,.78)
+  ,m);
+  // Horizon
+  vec3 skyH=mc(
+    vec3(.07,.028,.022),
+    vec3(.50,.13,.04),
+    vec3(.20,.22,.28),     // storm: light break
+    vec3(.50,.66,.80),
+    vec3(.52,.75,.92)
+  ,m);
+
+  // Gradient: 3-stop sky
+  float skyT=smoothstep(0.,.65,vy);   // 0 at horizon, 1 at zenith
+  vec3 col;
+  if(skyT>.5){
+    col=mix(skyM,skyZ,(skyT-.5)*2.);
+  } else {
+    col=mix(skyH,skyM,skyT*2.);
+  }
+
+  // Horizon glow band
+  float hGlow=exp(-vy*vy*12.);
+  vec3 glowC=mc(vec3(.10,.04,.02),vec3(.55,.14,.04),vec3(.16,.18,.25),vec3(.55,.68,.82),vec3(.65,.80,.92),m);
+  col+=glowC*hGlow*mf(.12,.28,.10,.18,.12,m);
+
+  // ── Sun disc + bloom ──
+  // Sun position in screen space (approximate)
+  vec2 sunPos=vec2(mix(-.4,.45,m),mix(.05,.45,m));
+  float sunDist=length(vec2(vx,vy)-sunPos);
+  float discR=mf(.08,.05,.015,.018,.018,m);
+  // Disc
+  col+=sc*si*smoothstep(discR,discR*.6,sunDist)*mf(1.2,1.8,1.,2.,2.5,m);
+  // Bloom rings
+  col+=sc*si*exp(-sunDist*mf(3.,4.,12.,15.,18.,m))*mf(.4,.4,.15,.25,.18,m);
+  col+=sc*si*exp(-sunDist*sunDist*mf(8.,12.,80.,120.,160.,m))*.5;
+
+  // ════════════════════════════════════════════════════════
+  // CLOUDS
+  // ════════════════════════════════════════════════════════
+  float cloudCov=mf(.6,.48,.60,.38,.24,m);
+
+  if(vy>-.05){
+    // Perspective compression: clouds near horizon are compressed
+    float cloudAlt=max(.01,vy+.05);
+    float perspect=1./(.25+cloudAlt*.75);
+
+    vec2 cuv=vec2(vx*perspect,perspect*.4)*2.8;
+    cuv.x+=T*.004;
+
+    // Multi-octave cloud shape
+    float shape=fb(cuv);
+    float detail=fb5(cuv*2.2+vec2(50.,30.));
+    float wisp=fb4(cuv*5.+vec2(100.,70.));
+
+    // Density
+    float den=smoothstep(cloudCov,cloudCov+.16,shape);
+    den*=.35+detail*.65;
+    den*=.7+wisp*.3;
+    // Fade at very top (thin atmosphere)
+    den*=smoothstep(.7,.35,vy);
+    // Fade near horizon (haze takes over)
+    den*=smoothstep(-.02,.08,vy);
+    // Thin out in hellscape
+    if(m<.18)den*=smoothstep(0.,.18,m);
+
+    // Self-shadow
+    float shadow=fb5(cuv+vec2(.04,.02));
+    float lit=smoothstep(.28,.72,shadow);
+    // Height gradient (top lit, bottom dark)
+    float topLit=smoothstep(cloudCov,cloudCov+.25,shape);
+
+    // Cloud colours
+    vec3 cDk=mc(
+      vec3(.018,.010,.010),
+      vec3(.05,.025,.020),
+      vec3(.05,.06,.09),      // storm: dark blue-grey
+      vec3(.32,.35,.40),
+      vec3(.55,.58,.64)       // sunny: cloud shadow
+    ,m);
+    vec3 cLt=mc(
+      vec3(.035,.018,.015),
+      vec3(.10,.045,.03),
+      vec3(.18,.20,.26),      // storm: lighter grey
+      vec3(.74,.76,.80),
+      vec3(.94,.95,.97)       // sunny: bright white cumulus
+    ,m);
+    // Warm underlight (light breaking through storm)
+    vec3 cUn=mc(
+      vec3(.03,.015,.01),
+      vec3(.12,.05,.025),
+      vec3(.32,.28,.18),      // golden underlight
+      vec3(.70,.68,.60),
+      vec3(.88,.86,.80)
+    ,m);
+
+    vec3 cloudCol=mix(cDk,cLt,lit*.45+topLit*.35);
+    // Storm underlight effect
+    float underI=smoothstep(.3,.48,m)*smoothstep(.65,.48,m);
+    float underMask=(1.-topLit)*lit*.5;
+    cloudCol=mix(cloudCol,cUn,underMask*underI*.5);
+
+    col=mix(col,cloudCol,clamp(den*.88,0.,1.));
+  }
+
+  // ════════════════════════════════════════════════════════
+  // LAYER 1: FAR MOUNTAIN
+  // ════════════════════════════════════════════════════════
+  if(vy<farMtH){
+    float relH=(farMtH-vy)/max(farMtH,.01); // 0 at peak, 1 at base
+
+    // Base mountain colour (atmospheric blue at high mood → dark at low)
+    vec3 mtCol=mc(
+      vec3(.030,.025,.022),      // hellscape: near-black
+      vec3(.06,.04,.035),        // blood: dark
+      vec3(.10,.11,.14),         // storm: blue-grey rock
+      vec3(.18,.22,.30),         // overcast: blue-tinted
+      vec3(.28,.32,.42)          // sunny: blue atmospheric (distant)
+    ,m);
+
+    // Green lower slopes
+    vec3 mtGreen=mc(
+      vec3(.025,.025,.018),
+      vec3(.04,.035,.025),
+      vec3(.06,.09,.05),
+      vec3(.12,.25,.10),
+      vec3(.18,.38,.12)
+    ,m);
+
+    // Rock
+    vec3 mtRock=mc(
+      vec3(.035,.030,.028),
+      vec3(.065,.05,.04),
+      vec3(.12,.12,.13),
+      vec3(.24,.22,.20),
+      vec3(.35,.33,.30)
+    ,m);
+
+    // Mix: green at bottom, rock in middle, potentially snow at top
+    float greenZone=smoothstep(.3,.7,relH);
+    vec3 surfCol=mix(mtRock,mtGreen,greenZone);
+
+    // Snow on peaks (high mood only)
+    if(m>.45){
+      float snowLine=mix(.35,.15,smoothstep(.45,1.,m));
+      float snow=smoothstep(snowLine+.08,snowLine,relH)*(m-.45)/.55;
+      // Snow gets sparse on steep areas (use noise as proxy for steepness)
+      snow*=.5+no(vec2(fmx*25.,vy*30.))*.5;
+      surfCol=mix(surfCol,vec3(.88,.90,.94),snow);
+    }
+
+    // Surface texture
+    surfCol*=.85+no(vec2(fmx*18.,vy*22.))*.3;
+
+    // Simple directional lighting
+    float lightAngle=fmx*.5+vy;
+    float lighting=.55+no(vec2(lightAngle*3.,vy*8.))*.3+smoothstep(0.,.3,relH)*.15;
+    surfCol*=lighting;
+
+    // Rim light at silhouette edge (backlit by sky)
+    float rim=exp(-(farMtH-vy)*45.);
+    vec3 rimCol=mc(vec3(.06,.02,.01),vec3(.3,.08,.03),vec3(.15,.16,.22),vec3(.4,.5,.6),vec3(.5,.6,.75),m);
+    surfCol+=rimCol*rim*mf(.15,.25,.12,.2,.18,m);
+
+    // Atmospheric perspective — blend toward sky horizon
+    float atmo=mf(.45,.35,.32,.28,.25,m);
+    surfCol=mix(surfCol,skyH*mf(.4,.5,.6,.8,.9,m),atmo);
+
+    // Lava veins (hellscape)
+    if(m<.28){
+      float li=(.28-m)/.28;
+      float valley=smoothstep(.0,.6,relH); // valleys = lower on mountain
+      float ln=no(vec2(fmx*8.+T*.02,vy*10.));
+      ln=smoothstep(.3,.55,ln);
+      float lv=valley*ln*li;
+      float pulse=.75+sin(T*.35+no(vec2(fmx*5.,vy*6.))*6.28)*.25;
+      surfCol+=vec3(1.,.16,.02)*lv*2.8*pulse;
+      surfCol+=vec3(.28,.04,.005)*lv*.6;
+    }
+
+    col=surfCol;
+  }
+
+  // ════════════════════════════════════════════════════════
+  // LAYER 2: NEAR HILLS (with tree silhouettes)
+  // ════════════════════════════════════════════════════════
+  if(vy<nearHillH){
+    float relH=(nearHillH-vy)/max(abs(nearHillH-grassH),.01);
+
+    vec3 hillCol=mc(
+      vec3(.020,.020,.015),
+      vec3(.035,.030,.022),
+      vec3(.05,.08,.04),        // storm: dark olive
+      vec3(.10,.22,.07),        // overcast: muted green
+      vec3(.15,.35,.08)         // sunny: rich green
+    ,m);
+
+    // Darker at base, lighter at top
+    hillCol*=.75+relH*.35;
+    // Texture
+    hillCol*=.88+no(vec2(nhx*22.,vy*28.))*.24;
+
+    // Tree-like dark patches
+    float treeDark=smoothstep(.45,.55,no(vec2(nhx*10.,vy*12.+1.)));
+    hillCol*=1.-treeDark*.25;
+
+    // Less atmospheric haze than far mountain
+    float atmo=mf(.25,.2,.18,.15,.12,m);
+    hillCol=mix(hillCol,skyH*mf(.3,.4,.5,.7,.8,m),atmo);
+
+    col=hillCol;
+  }
+
+  // ════════════════════════════════════════════════════════
+  // LAYER 3: FOREGROUND GRASS
+  // ════════════════════════════════════════════════════════
+  if(vy<grassH){
+    // Distance mapping: closer to grassH = farther, closer to bottom = nearer
+    float dist=1./max(.02,grassH-vy+.02);
+    vec2 groundUV=vec2(fgx*dist*.8,dist*.4);
+
+    vec3 gCol=mc(
+      vec3(.018,.018,.012),
+      vec3(.035,.028,.020),
+      vec3(.05,.08,.035),
+      vec3(.14,.30,.08),
+      vec3(.22,.48,.12)        // vivid green grass
+    ,m);
+
+    // Grass texture with perspective
+    float grassTex=no(groundUV*8.)*.3+no(groundUV*20.)*.15;
+    gCol*=.78+grassTex;
+
+    // Subtle stripe banding (mowed fields)
+    if(m>.5){
+      float stripes=sin(groundUV.y*15.)*.5+.5;
+      gCol*=.92+stripes*.08*(m-.5)*2.;
+    }
+
+    // Darken toward horizon (atmospheric)
+    float horizDark=smoothstep(.02,.3,grassH-vy);
+    gCol*=.6+horizDark*.4;
+
+    // Atmospheric haze near horizon
+    float haze=exp(-(grassH-vy)*8.)*mf(.4,.35,.3,.2,.15,m);
+    vec3 hazeCol=mc(vec3(.05,.02,.015),vec3(.15,.05,.03),vec3(.10,.12,.16),vec3(.38,.48,.58),vec3(.45,.62,.78),m);
+    gCol=mix(gCol,hazeCol,haze);
+
+    col=gCol;
+  }
+
+  // ════════════════════════════════════════════════════════
+  // LAYER 4: NEAR FOREGROUND (tall grass silhouettes)
+  // ════════════════════════════════════════════════════════
+  if(vy<nearGrassH){
+    // Dark silhouetted grass in immediate foreground
+    vec3 fgCol=mc(
+      vec3(.010,.010,.008),
+      vec3(.020,.018,.012),
+      vec3(.025,.040,.018),
+      vec3(.04,.10,.02),
+      vec3(.06,.15,.03)
+    ,m);
+
+    // Slight variation
+    fgCol*=.7+no(vec2(ngx*40.,vy*50.))*.6;
+
+    // Backlight rim on grass tips
+    float tipDist=nearGrassH-vy;
+    float tipRim=exp(-tipDist*50.);
+    vec3 rimC=mc(vec3(.04,.01,.005),vec3(.15,.04,.02),vec3(.06,.08,.04),vec3(.12,.22,.06),vec3(.18,.32,.08),m);
+    fgCol+=rimC*tipRim*.5;
+
+    col=fgCol;
+  }
+
+  // ════════════════════════════════════════════════════════
+  // RAIN (storm range)
+  // ════════════════════════════════════════════════════════
+  if(m<.50&&m>.10){
+    float ri=smoothstep(.50,.18,m)*smoothstep(.10,.18,m);
+    vec2 rp=gl_FragCoord.xy;
+    rp.x+=rp.y*.22;
+    float rl=smoothstep(.96,1.,fract(rp.y*.035+T*2.2));
+    float rn=no(rp*vec2(.07,.006)+T*vec2(.25,2.));
+    col+=vec3(.18,.20,.32)*rl*rn*.3*ri;
+  }
+
+  // ════════════════════════════════════════════════════════
+  // LIGHTNING FLASH (storm)
+  // ════════════════════════════════════════════════════════
+  if(m>.15&&m<.50){
+    float flash=step(.996,h2(vec2(floor(T*2.5),42.)));
+    if(flash>.5){
+      float fi=smoothstep(.15,.32,m)*smoothstep(.50,.32,m);
+      col+=vec3(.12,.15,.22)*fi;
+    }
+  }
+
+  // ════════════════════════════════════════════════════════
+  // POST-PROCESSING
+  // ════════════════════════════════════════════════════════
+
+  // Red horizon glow (blood-red range)
+  if(m<.35){
+    float ri=smoothstep(.35,.05,m);
+    float hg=exp(-vy*vy*6.);
+    col+=vec3(.35,.05,.01)*hg*ri*.45;
+  }
+
+  // Vignette
+  float vig=1.-dot(uv-.5,uv-.5)*mf(3.,2.4,2.,1.2,.8,m);
+  col*=clamp(vig,0.,1.);
+
+  // Film grain
+  col+=(h2(gl_FragCoord.xy+fract(T)*100.)-.5)*mf(.055,.04,.028,.014,.010,m);
+
+  // ACES tone mapping
+  col=max(col,0.);
+  col=col*(2.51*col+.03)/(col*(2.43*col+.59)+.14);
+
+  // Gamma
+  col=pow(max(col,0.),vec3(1./2.2));
+
+  // Colour grade
+  col*=mc(vec3(1.,.82,.76),vec3(1.,.86,.80),vec3(.93,.94,1.),vec3(.97,.97,1.),vec3(1.,1.,.97),m);
+
+  gl_FragColor=vec4(clamp(col,0.,1.),1.);
+}
+</script>
+
+<script>
+const questions = [
+  { text: "Are you looking for more of a designer than an engineer?",
+    type: "scale", low: "Pure engineer", high: "Pure designer", scoring: "bell" },
+  { text: "Are you looking for someone fun and a little sarcastic?",
+    type: "scale", low: "Absolutely not", high: "The more the better", scoring: "standard" },
+  { text: "Do you want someone to focus on a single task for 6 months?",
+    type: "scale", low: "No, variety is key", high: "Yes, deep focus only", scoring: "inverted" },
+  { text: "Is your team fixed on certain tools and not flexible?",
+    type: "scale", low: "No, we're open", high: "Yes, locked in", scoring: "inverted" },
+  { text: "Do you have flexible working hours and trust your people to deliver?",
+    type: "scale", low: "No, strict hours", high: "Yes, results matter", scoring: "standard" },
+  { text: "Do you want to see growth from your designers and let them explore?",
+    type: "scale", low: "No, stay in your lane", high: "Yes, always", scoring: "standard" },
+  { text: "Are you based in Europe?",
+    type: "binary", scoring: "standard" },
+];
+
+const canvas=document.getElementById('gl');
+const gl=canvas.getContext('webgl')||canvas.getContext('experimental-webgl');
+function cs(t,s){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS)){console.error(gl.getShaderInfoLog(sh));return null;}return sh;}
+const vs=cs(gl.VERTEX_SHADER,document.getElementById('vs').textContent);
+const fs=cs(gl.FRAGMENT_SHADER,document.getElementById('fs').textContent);
+const prog=gl.createProgram();gl.attachShader(prog,vs);gl.attachShader(prog,fs);gl.linkProgram(prog);
+if(!gl.getProgramParameter(prog,gl.LINK_STATUS))console.error(gl.getProgramInfoLog(prog));
+gl.useProgram(prog);
+const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+const aL=gl.getAttribLocation(prog,'a');gl.enableVertexAttribArray(aL);gl.vertexAttribPointer(aL,2,gl.FLOAT,false,0,0);
+const uR=gl.getUniformLocation(prog,'R'),uT=gl.getUniformLocation(prog,'T'),uM=gl.getUniformLocation(prog,'M'),uMX=gl.getUniformLocation(prog,'MX'),uMY=gl.getUniformLocation(prog,'MY');
+
+function resize(){const d=window.devicePixelRatio||1;canvas.width=Math.round(canvas.offsetWidth*d);canvas.height=Math.round(canvas.offsetHeight*d);}
+window.addEventListener('resize',resize);resize();
+
+const panel=document.getElementById('lp');
+let pxX=0,pxY=0,tpX=0,tpY=0;
+panel.addEventListener('mousemove',e=>{const r=panel.getBoundingClientRect();tpX=((e.clientX-r.left)/r.width-.5)*2;tpY=((e.clientY-r.top)/r.height-.5)*2;});
+panel.addEventListener('mouseleave',()=>{tpX=0;tpY=0;});
+panel.addEventListener('touchmove',e=>{const r=panel.getBoundingClientRect();const t=e.touches[0];tpX=((t.clientX-r.left)/r.width-.5)*2;tpY=((t.clientY-r.top)/r.height-.5)*2;},{passive:true});
+panel.addEventListener('touchend',()=>{tpX=0;tpY=0;});
+
+const answers=new Array(questions.length).fill(null);
+let curQ=0,transitioning=false,targetMood=.75,animMood=.75;
+const counterEl=document.getElementById('qc'),slideEl=document.getElementById('qs'),textEl=document.getElementById('qt'),rowEl=document.getElementById('rr'),progressEl=document.getElementById('pr');
+
+questions.forEach((_,i)=>{const d=document.createElement('div');d.className='pd';d.addEventListener('click',()=>{if(!transitioning&&answers[i]!==null)goTo(i);});progressEl.appendChild(d);});
+
+function renderQ(qi){
+  const q=questions[qi];counterEl.textContent=`${qi+1} of ${questions.length}`;textEl.textContent=q.text;rowEl.innerHTML='';
+  if(q.type==='binary'){
+    const w=document.createElement('div');w.className='bb-wrap';
+    ['No','Yes'].forEach((l,bi)=>{const b=document.createElement('button');b.className='bb';b.textContent=l;const v=bi===0?1:5;if(answers[qi]===v)b.classList.add('sel');b.addEventListener('click',()=>onRate(qi,v));w.appendChild(b);});
+    rowEl.appendChild(w);
+  } else {
+    const row=document.createElement('div');row.className='rr';
+    const lo=document.createElement('span');lo.className='pl';lo.textContent=q.low;row.appendChild(lo);
+    const bw=document.createElement('div');bw.className='rb-wrap';
+    for(let v=1;v<=5;v++){const b=document.createElement('button');b.className='rb';b.textContent=v;if(answers[qi]===v)b.classList.add('sel');b.addEventListener('click',()=>onRate(qi,v));bw.appendChild(b);}
+    row.appendChild(bw);
+    const hi=document.createElement('span');hi.className='pl r';hi.textContent=q.high;row.appendChild(hi);rowEl.appendChild(row);
+  }
+  updateDots();
+}
+function updateDots(){const dots=progressEl.children;for(let i=0;i<dots.length;i++){dots[i].className='pd';if(i===curQ)dots[i].classList.add('cur');else if(answers[i]!==null)dots[i].classList.add('done');}}
+function goTo(qi){if(transitioning)return;transitioning=true;slideEl.classList.add('out');setTimeout(()=>{curQ=qi;renderQ(qi);slideEl.classList.remove('out');slideEl.classList.add('in');requestAnimationFrame(()=>{requestAnimationFrame(()=>{slideEl.classList.remove('in');transitioning=false;});});},300);}
+function fitScore(v,s){const n=(v-1)/4;if(s==='standard')return n;if(s==='inverted')return 1-n;if(s==='bell')return 1-Math.abs(v-3)/2;return n;}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function lerp(a,b,t){return a+(b-a)*t;}
+function onRate(qi,value){
+  if(transitioning)return;answers[qi]=value;
+  rowEl.querySelectorAll('.rb,.bb').forEach(btn=>{btn.classList.remove('sel');const isMatch=btn.classList.contains('bb')?(btn.textContent==='Yes'&&value===5)||(btn.textContent==='No'&&value===1):parseInt(btn.textContent)===value;if(isMatch)btn.classList.add('sel');});
+  const scores=answers.map((a,i)=>a!==null?fitScore(a,questions[i].scoring):null).filter(a=>a!==null);
+  if(scores.length>0){const avg=scores.reduce((s,a)=>s+a,0)/scores.length;const ratio=scores.length/questions.length;targetMood=clamp(lerp(.7,avg,Math.pow(ratio,.5)),.03,.95);}
+  if(qi<questions.length-1)setTimeout(()=>{if(curQ===qi)goTo(qi+1);},550);
+}
+renderQ(0);
+
+function getMoodText(m){if(m>.85)return"A perfect summer's day";if(m>.70)return"Looking promising";if(m>.55)return"The wind is picking up";if(m>.40)return"Storm clouds are forming";if(m>.25)return"The outlook is grim";if(m>.12)return"You have chosen poorly";return"Abandon all hope";}
+
+const moodLabel=document.getElementById('ml');
+let lastLabel='';
+function loop(now){
+  pxX+=(tpX-pxX)*.05;pxY+=(tpY-pxY)*.05;
+  animMood+=(targetMood-animMood)*.018;
+  gl.viewport(0,0,canvas.width,canvas.height);
+  gl.uniform2f(uR,canvas.width,canvas.height);
+  gl.uniform1f(uT,now*.001);
+  gl.uniform1f(uM,animMood);
+  gl.uniform1f(uMX,pxX);
+  gl.uniform1f(uMY,pxY);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  const lt=getMoodText(animMood);
+  if(lt!==lastLabel){moodLabel.textContent=lt;lastLabel=lt;}
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
