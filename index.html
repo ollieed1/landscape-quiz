@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Should you hire me?</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+
+  .layout {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* LEFT PANEL */
+  .questions-panel {
+    width: 50%;
+    background: #FAFAF8;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .questions-header {
+    padding: 36px 40px 20px;
+    flex-shrink: 0;
+  }
+
+  .questions-header h1 {
+    font-size: 36px;
+    font-weight: 800;
+    color: #1a1a1a;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
+
+  .questions-header p {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #888;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  .questions-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 40px 20px;
+    scrollbar-width: thin;
+    scrollbar-color: #ddd #FAFAF8;
+  }
+
+  .questions-scroll::-webkit-scrollbar { width: 4px; }
+  .questions-scroll::-webkit-scrollbar-track { background: transparent; }
+  .questions-scroll::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+
+  .question-item {
+    margin-bottom: 24px;
+  }
+
+  .question-label {
+    font-size: 10px;
+    font-variant: small-caps;
+    letter-spacing: 0.08em;
+    color: #aaa;
+    font-weight: 600;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  .question-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2a2a2a;
+    line-height: 1.4;
+    margin-bottom: 10px;
+  }
+
+  .rating-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .rating-pole-label {
+    font-size: 11px;
+    color: #aaa;
+    font-weight: 400;
+    white-space: nowrap;
+    min-width: 60px;
+  }
+
+  .rating-pole-label.right {
+    text-align: left;
+  }
+
+  .rating-buttons {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .rating-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #aaa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  .rating-btn:hover {
+    transform: scale(1.15);
+    border-color: #bbb;
+    color: #555;
+  }
+
+  .rating-btn:active {
+    transform: scale(0.95);
+  }
+
+  .rating-btn.selected-1 { background: #E53935; border-color: #E53935; color: #fff; box-shadow: 0 2px 8px rgba(229,57,53,0.4); }
+  .rating-btn.selected-2 { background: #F4511E; border-color: #F4511E; color: #fff; box-shadow: 0 2px 8px rgba(244,81,30,0.4); }
+  .rating-btn.selected-3 { background: #F9A825; border-color: #F9A825; color: #fff; box-shadow: 0 2px 8px rgba(249,168,37,0.4); }
+  .rating-btn.selected-4 { background: #7CB342; border-color: #7CB342; color: #fff; box-shadow: 0 2px 8px rgba(124,179,66,0.4); }
+  .rating-btn.selected-5 { background: #2E7D32; border-color: #2E7D32; color: #fff; box-shadow: 0 2px 8px rgba(46,125,50,0.4); }
+
+  .status-area {
+    flex-shrink: 0;
+    padding: 16px 40px 20px;
+    transition: background 1.2s ease;
+  }
+
+  .status-box {
+    display: none;
+    border-radius: 10px;
+    padding: 14px 18px;
+    background: rgba(0,0,0,0.04);
+    transition: background 1.2s ease;
+  }
+
+  .status-box.visible {
+    display: block;
+  }
+
+  .status-label {
+    font-size: 10px;
+    font-variant: small-caps;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #aaa;
+    font-weight: 600;
+    margin-bottom: 3px;
+  }
+
+  .status-text {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+    transition: color 0.8s ease;
+  }
+
+  .status-subtext {
+    font-size: 12px;
+    color: #888;
+    margin-top: 2px;
+    transition: color 0.8s ease;
+  }
+
+  /* RIGHT PANEL */
+  .landscape-panel {
+    width: 50%;
+    position: relative;
+    overflow: hidden;
+    background: #030306;
+  }
+
+  #landscapeCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  #lightning-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: white;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 20;
+    transition: opacity 0.05s linear;
+  }
+
+  #mood-label {
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    color: rgba(255,255,255,0.7);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.9);
+    pointer-events: none;
+    z-index: 15;
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- LEFT: QUESTIONS -->
+  <div class="questions-panel">
+    <div class="questions-header">
+      <h1>Are you looking for a designer who doesn't sweat the details?</h1>
+      <p>Answer honestly. The landscape knows.</p>
+    </div>
+
+    <div class="questions-scroll" id="questions-scroll">
+      <!-- Injected by JS -->
+    </div>
+
+    <div class="status-area">
+      <div class="status-box" id="status-box">
+        <div class="status-label">The verdict</div>
+        <div class="status-text" id="status-text"></div>
+        <div class="status-subtext" id="status-subtext"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: LANDSCAPE CANVAS -->
+  <div class="landscape-panel" id="landscape-panel">
+    <canvas id="landscapeCanvas"></canvas>
+    <div id="lightning-overlay"></div>
+    <div id="mood-label">A perfect summer's day</div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// QUESTIONS DATA
+// ═══════════════════════════════════════════════════════════
+// scoring: "standard" = high is positive, "inverted" = high is negative, "bell" = middle is best
+const questions = [
+  { text: "Are you looking for more of a designer than an engineer?",
+    low: "Pure engineer", high: "Pure designer", scoring: "bell" },
+  { text: "Are you looking for someone fun and a little sarcastic?",
+    low: "Absolutely not", high: "The more the better", scoring: "standard" },
+  { text: "Do you want someone to focus on a single task for 6 months?",
+    low: "No, variety is key", high: "Yes, deep focus only", scoring: "inverted" },
+  { text: "Is your team fixed on certain tools and not flexible?",
+    low: "No, we're open", high: "Yes, locked in", scoring: "inverted" },
+  { text: "Do you have flexible working hours and trust your people to deliver?",
+    low: "No, strict hours", high: "Yes, results matter", scoring: "standard" },
+  { text: "Do you want to see growth from your designers and let them explore?",
+    low: "No, stay in your lane", high: "Yes, always", scoring: "standard" },
+  { text: "Are you based in Europe?",
+    low: "No", high: "Yes", scoring: "standard" },
+];
+
+// ═══════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function lerp(a, b, t)  { return a + (b - a) * t; }
+function smoothstep(e0, e1, x) {
+  const t = clamp((x - e0) / (e1 - e0), 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return [r, g, b];
+}
+
+function lerpColor(hexA, hexB, t) {
+  const [r1,g1,b1] = hexToRgb(hexA);
+  const [r2,g2,b2] = hexToRgb(hexB);
+  return [
+    Math.round(lerp(r1, r2, t)),
+    Math.round(lerp(g1, g2, t)),
+    Math.round(lerp(b1, b2, t))
+  ];
+}
+
+function lerpColorHex(hexA, hexB, t) {
+  const [r,g,b] = lerpColor(hexA, hexB, t);
+  return `rgb(${r},${g},${b})`;
+}
+
+// Interpolate across 5-stop color table at mood breakpoints [0, 0.25, 0.5, 0.75, 1.0]
+const COLOR_STOPS = [0, 0.25, 0.5, 0.75, 1.0];
+function moodColor(table, mood) {
+  for (let i = 0; i < COLOR_STOPS.length - 1; i++) {
+    if (mood <= COLOR_STOPS[i+1]) {
+      const t = (mood - COLOR_STOPS[i]) / (COLOR_STOPS[i+1] - COLOR_STOPS[i]);
+      return lerpColor(table[i], table[i+1], t);
+    }
+  }
+  return hexToRgb(table[table.length - 1]);
+}
+function moodColorStr(table, mood) {
+  const [r,g,b] = moodColor(table, mood);
+  return `rgb(${r},${g},${b})`;
+}
+
+// Seeded pseudo-random — deterministic per seed, no flicker
+function frand(seed) {
+  return Math.abs(Math.sin(seed * 127.1 + 311.7) * 43758.5) % 1;
+}
+
+// ═══════════════════════════════════════════════════════════
+// CANVAS SETUP
+// ═══════════════════════════════════════════════════════════
+const panel         = document.getElementById('landscape-panel');
+const canvas        = document.getElementById('landscapeCanvas');
+const ctx           = canvas.getContext('2d');
+const lightningOver = document.getElementById('lightning-overlay');
+const moodLabel     = document.getElementById('mood-label');
+
+let W, H, dpr;
+
+function resizeCanvas() {
+  dpr = window.devicePixelRatio || 1;
+  W   = canvas.offsetWidth;
+  H   = canvas.offsetHeight;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  ctx.scale(dpr, dpr);
+  // Rebuild grain pattern on resize
+  buildGrainCanvas();
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+// ═══════════════════════════════════════════════════════════
+// FILM GRAIN PRE-GENERATION
+// ═══════════════════════════════════════════════════════════
+let grainCanvas = null;
+
+function buildGrainCanvas() {
+  grainCanvas = document.createElement('canvas');
+  grainCanvas.width = grainCanvas.height = 512;
+  const gc = grainCanvas.getContext('2d');
+  const id = gc.createImageData(512, 512);
+  for (let i = 0; i < id.data.length; i += 4) {
+    const v = Math.random() * 255;
+    id.data[i] = id.data[i+1] = id.data[i+2] = v;
+    id.data[i+3] = 255;
+  }
+  gc.putImageData(id, 0, 0);
+}
+
+// ═══════════════════════════════════════════════════════════
+// STORM CLOUD BLOB PRE-GENERATION
+// ═══════════════════════════════════════════════════════════
+const STORM_BLOBS = [];
+(function buildStormBlobs() {
+  for (let i = 0; i < 90; i++) {
+    STORM_BLOBS.push({
+      xFrac:  frand(i * 7 + 1),
+      yFrac:  frand(i * 7 + 2) * 0.55,
+      rFrac:  0.03 + frand(i * 7 + 3) * 0.15,
+      oBase:  0.3  + frand(i * 7 + 4) * 0.4,
+      aspect: 0.4  + frand(i * 7 + 5) * 0.35
+    });
+  }
+})();
+
+// ═══════════════════════════════════════════════════════════
+// RAIN PARTICLES
+// ═══════════════════════════════════════════════════════════
+const rainParticles = [];
+
+function ensureRainCount(count) {
+  while (rainParticles.length < count) {
+    const p = spawnRain(true);
+    rainParticles.push(p);
+  }
+  if (rainParticles.length > count + 30) {
+    rainParticles.splice(count);
+  }
+}
+
+function spawnRain(scatter) {
+  return {
+    x:       Math.random() * (W || 600),
+    y:       scatter ? Math.random() * (H || 800) : -30,
+    speed:   12 + Math.random() * 18,
+    length:  12 + Math.random() * 22,
+    opacity: 0.15 + Math.random() * 0.35,
+    angle:   0.22 + Math.random() * 0.06,
+    streak:  Math.random() < 0.04
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// LIGHTNING
+// ═══════════════════════════════════════════════════════════
+let lightningBolt     = null;
+let lightningTimer    = 150;
+let lightningFlashAge = 999;
+const LIGHTNING_LIFE  = 10;
+
+function buildLightningPath(x1, y1, x2, y2, depth, points) {
+  if (depth === 0) {
+    points.push([x2, y2]);
+    return;
+  }
+  const mx = (x1 + x2) * 0.5 + (Math.random() - 0.5) * depth * 70;
+  const my = (y1 + y2) * 0.5 + (Math.random() - 0.5) * depth * 25;
+  buildLightningPath(x1, y1, mx, my, depth - 1, points);
+  buildLightningPath(mx, my, x2, y2, depth - 1, points);
+  if (Math.random() < 0.3) {
+    // Branch
+    const bx = mx + (Math.random() - 0.5) * 120;
+    const by = my + (Math.random() * 80);
+    buildLightningPath(mx, my, bx, by, depth - 2, points);
+  }
+}
+
+function triggerLightningBolt() {
+  const startX = W * (0.2 + Math.random() * 0.6);
+  const points  = [[startX, 0]];
+  buildLightningPath(startX, 0, startX + (Math.random()-0.5)*120, H * 0.6, 5, points);
+  lightningBolt     = points;
+  lightningFlashAge = 0;
+
+  // DOM flash
+  lightningOver.style.opacity = '0.45';
+  setTimeout(() => { lightningOver.style.opacity = '0'; }, 55);
+  setTimeout(() => { lightningOver.style.opacity = '0.2'; }, 100);
+  setTimeout(() => { lightningOver.style.opacity = '0'; }, 160);
+}
+
+// ═══════════════════════════════════════════════════════════
+// MOUNTAIN PATH GENERATORS (deterministic)
+// ═══════════════════════════════════════════════════════════
+function getBackMountainPath() {
+  // 7 peaks across full width, y spans H*0.40 to H*0.60
+  const peaks = [
+    [0,       0.60],
+    [0.08,    0.44],
+    [0.17,    0.52],
+    [0.27,    0.40],
+    [0.37,    0.48],
+    [0.47,    0.42],
+    [0.57,    0.52],
+    [0.66,    0.38],
+    [0.76,    0.46],
+    [0.86,    0.41],
+    [0.93,    0.50],
+    [1.0,     0.58],
+    [1.0,     0.62],
+    [0,       0.62],
+  ];
+  return peaks;
+}
+
+function getFrontMountainPath() {
+  const peaks = [
+    [0,       0.62],
+    [0.06,    0.52],
+    [0.16,    0.58],
+    [0.25,    0.48],
+    [0.35,    0.55],
+    [0.46,    0.47],
+    [0.56,    0.54],
+    [0.65,    0.50],
+    [0.76,    0.57],
+    [0.86,    0.52],
+    [0.95,    0.56],
+    [1.0,     0.62],
+    [1.0,     0.65],
+    [0,       0.65],
+  ];
+  return peaks;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCENE COLOR TABLES  [mood=0, 0.25, 0.5, 0.75, 1.0]
+// ═══════════════════════════════════════════════════════════
+const C = {
+  skyTop:    ['#030306', '#0d0d1c', '#3a4a56', '#1a5fa8', '#0d47a1'],
+  skyMid:    ['#080810', '#151520', '#4a5a6a', '#3a90d5', '#1976d2'],
+  skyLow:    ['#0d0e18', '#1e2030', '#6a7a85', '#6bb8f0', '#42a5f5'],
+  skyBot:    ['#121420', '#252838', '#9aabb0', '#cce9f9', '#b3e5fc'],
+  mtBack:    ['#0e1214', '#1e2426', '#3a4a44', '#476a5f', '#4a7a6a'],
+  mtFront:   ['#0a0e10', '#1a2020', '#384540', '#4a7055', '#527a5a'],
+  hill1:     ['#0a1008', '#1a2010', '#3a5030', '#507848', '#6aaa58'],
+  hill2:     ['#080e06', '#161c0e', '#304528', '#487040', '#5a9e50'],
+  hill3:     ['#060b05', '#12170c', '#263820', '#406838', '#4d8e45'],
+  grass:     ['#0d1408', '#1a2010', '#3a5030', '#507848', '#7ec86a'],
+  tree:      ['#0a100a', '#111811', '#243424', '#2e5230', '#3d6e3d'],
+  treeShadow:['#060b06', '#0c0f0c', '#1a2a1a', '#223e22', '#2a4f2a'],
+  road:      ['#282830', '#323238', '#6a6a70', '#7a7a80', '#8a8a8a'],
+  poleColor: ['#333333', '#3a3a3a', '#606060', '#777777', '#888888'],
+  houseWall: ['#3a3030', '#453535', '#6a5a4a', '#9a8870', '#c8b89a'],
+  houseRoof: ['#2a2020', '#352525', '#5a4038', '#7a6050', '#8a7050'],
+};
+
+// ═══════════════════════════════════════════════════════════
+// MAIN DRAW FUNCTION
+// ═══════════════════════════════════════════════════════════
+function drawLandscape(mood, t) {
+  ctx.clearRect(0, 0, W, H);
+
+  const HOR = H * 0.60; // horizon line
+  const VP  = W * 0.5;  // vanishing point x
+  const stormIntensity = clamp((0.65 - mood) / 0.65, 0, 1);
+
+  // ── 1. SKY ──────────────────────────────────────────────
+  {
+    const sg = ctx.createLinearGradient(0, 0, 0, H * 0.62);
+    sg.addColorStop(0,    moodColorStr(C.skyTop, mood));
+    sg.addColorStop(0.35, moodColorStr(C.skyMid, mood));
+    sg.addColorStop(0.72, moodColorStr(C.skyLow, mood));
+    sg.addColorStop(1,    moodColorStr(C.skyBot,  mood));
+    ctx.fillStyle = sg;
+    ctx.fillRect(0, 0, W, H * 0.65);
+  }
+
+  // ── 2. SUN ──────────────────────────────────────────────
+  if (mood > 0.3) {
+    const sunOpacity = smoothstep(0.3, 0.6, mood);
+    const sx = W * 0.72;
+    const sy = H * 0.15;
+
+    // Outer atmospheric glow
+    const og = ctx.createRadialGradient(sx, sy, 0, sx, sy, W * 0.14);
+    og.addColorStop(0, `rgba(255,235,100,${0.5 * sunOpacity})`);
+    og.addColorStop(1, 'rgba(255,180,0,0)');
+    ctx.fillStyle = og;
+    ctx.beginPath();
+    ctx.arc(sx, sy, W * 0.14, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Mid ring
+    const mg = ctx.createRadialGradient(sx, sy, 0, sx, sy, W * 0.09);
+    mg.addColorStop(0, `rgba(255,210,80,${0.3 * sunOpacity})`);
+    mg.addColorStop(1, 'rgba(255,210,80,0)');
+    ctx.fillStyle = mg;
+    ctx.beginPath();
+    ctx.arc(sx, sy, W * 0.09, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Core
+    ctx.globalAlpha = sunOpacity;
+    ctx.fillStyle = '#fff9c4';
+    ctx.beginPath();
+    ctx.arc(sx, sy, W * 0.045, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // ── 3. NORMAL CLOUDS ────────────────────────────────────
+  if (mood > 0.3) {
+    const cloudOpacity = smoothstep(0.3, 0.7, mood);
+    const cr = Math.round(lerp(200, 255, smoothstep(0.3, 0.9, mood)));
+    const cg = Math.round(lerp(205, 255, smoothstep(0.3, 0.9, mood)));
+    const cb = Math.round(lerp(210, 255, smoothstep(0.3, 0.9, mood)));
+
+    const cloudDefs = [
+      { cx: W * 0.18, cy: H * 0.22, w: W * 0.32, h: H * 0.14 },
+      { cx: W * 0.52, cy: H * 0.17, w: W * 0.24, h: H * 0.10 },
+      { cx: W * 0.75, cy: H * 0.24, w: W * 0.20, h: H * 0.09 },
+    ];
+
+    cloudDefs.forEach((cd, ci) => {
+      const driftX = Math.sin(t * 0.0003 + ci) * W * 0.02;
+      drawVolumetricCloud(cd.cx + driftX, cd.cy, cd.w, cd.h, cr, cg, cb, cloudOpacity, ci);
+    });
+  }
+
+  // ── 4. STORM CLOUDS ─────────────────────────────────────
+  if (mood < 0.65) {
+    drawStormClouds(mood, stormIntensity, t);
+  }
+
+  // ── 5. MOUNTAINS ────────────────────────────────────────
+  drawMountains(mood, stormIntensity);
+
+  // ── 6. HILLS ────────────────────────────────────────────
+  drawHills(mood, t);
+
+  // ── 7. TREES ────────────────────────────────────────────
+  drawTrees(mood, t, stormIntensity);
+
+  // ── 8. FIELDS ───────────────────────────────────────────
+  drawFields(mood);
+
+  // ── 9. ROAD ─────────────────────────────────────────────
+  drawRoad(mood, t);
+
+  // ── 10. GUARDRAIL ───────────────────────────────────────
+  drawGuardrail(mood);
+
+  // ── 11. POWER POLES ─────────────────────────────────────
+  drawPowerPoles(mood, t);
+
+  // ── 12. HOUSE ───────────────────────────────────────────
+  drawHouse(mood, t);
+
+  // ── 13. FLOOD ───────────────────────────────────────────
+  if (mood < 0.25) {
+    drawFlood(mood, t);
+  }
+
+  // ══ POST-PROCESSING ═════════════════════════════════════
+
+  // A. Atmospheric haze
+  if (mood < 0.6) {
+    const hazeIntensity = clamp((0.6 - mood) / 0.6, 0, 1);
+    const hg = ctx.createLinearGradient(0, H * 0.45, 0, H * 0.70);
+    hg.addColorStop(0, 'rgba(10,15,25,0)');
+    hg.addColorStop(1, `rgba(10,15,25,${0.65 * hazeIntensity})`);
+    ctx.fillStyle = hg;
+    ctx.fillRect(0, H * 0.45, W, H * 0.30);
+  }
+
+  // B. Rain particles
+  drawRain(mood, t);
+
+  // C. Lightning bolt
+  if (lightningBolt && lightningFlashAge < LIGHTNING_LIFE && mood < 0.35) {
+    drawLightningBolt(lightningBolt, lightningFlashAge / LIGHTNING_LIFE);
+    lightningFlashAge++;
+  }
+
+  // D. Film grain
+  if (mood < 0.5 && grainCanvas) {
+    const grainOpacity = clamp((0.5 - mood) / 0.5, 0, 1) * 0.13;
+    ctx.save();
+    ctx.globalAlpha = grainOpacity;
+    ctx.globalCompositeOperation = 'overlay';
+    const pat = ctx.createPattern(grainCanvas, 'repeat');
+    if (pat) {
+      ctx.translate(Math.random() * 512, Math.random() * 512);
+      ctx.fillStyle = pat;
+      ctx.fillRect(-512, -512, W + 1024, H + 1024);
+    }
+    ctx.restore();
+  }
+
+  // E. Vignette
+  {
+    const outerA = lerp(0.78, 0.25, mood);
+    const vg = ctx.createRadialGradient(W*0.5, H*0.5, 0, W*0.5, H*0.5, W*0.85);
+    vg.addColorStop(0, 'rgba(0,0,0,0)');
+    vg.addColorStop(0.5,'rgba(0,0,0,0)');
+    vg.addColorStop(1, `rgba(0,0,0,${outerA})`);
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // F. Cold color cast
+  if (mood < 0.5) {
+    const castI = (0.5 - mood) / 0.5;
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = `rgba(10,15,40,${castI * 0.18})`;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCENE ELEMENT FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+
+function drawVolumetricCloud(cx, cy, w, h, cr, cg, cb, opacity, cloudIndex) {
+  for (let i = 0; i < 22; i++) {
+    const seed = cloudIndex * 100 + i;
+    const bx = cx + (frand(seed)   - 0.5) * w;
+    const by = cy + (frand(seed+1) - 0.5) * h * 0.6;
+    const r  = w * 0.18 + frand(seed+2) * w * 0.14;
+    const a  = (0.4 + frand(seed+3) * 0.4) * opacity;
+    const grad = ctx.createRadialGradient(bx, by, 0, bx, by, r);
+    grad.addColorStop(0,   `rgba(${cr},${cg},${cb},${a})`);
+    grad.addColorStop(0.5, `rgba(${cr},${cg},${cb},${a*0.5})`);
+    grad.addColorStop(1,   `rgba(${cr},${cg},${cb},0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.ellipse(bx, by, r, r * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+let stormScroll = 0;
+
+function drawStormClouds(mood, intensity, t) {
+  stormScroll += intensity * 0.3;
+  if (stormScroll > W * 1.3) stormScroll -= W * 1.3;
+
+  // Extreme blackout sky layer
+  if (intensity > 0.6) {
+    const blackA = clamp((intensity - 0.6) / 0.4, 0, 1) * 0.9;
+    ctx.fillStyle = `rgba(5,5,8,${blackA})`;
+    ctx.fillRect(0, 0, W, H * 0.65);
+  }
+
+  STORM_BLOBS.forEach((blob, i) => {
+    const bx = (blob.xFrac * W * 1.3 + stormScroll) % (W * 1.3) - W * 0.15;
+    const by  = blob.yFrac * H * 0.55;
+    const r   = blob.rFrac * W;
+
+    // Darken blob color with intensity
+    const lBase = Math.round(lerp(8, 130, 1 - intensity));
+    const cr = lBase, cg = lBase + 2, cb = lBase + 6;
+    const alpha = blob.oBase * intensity * 1.1;
+
+    const grad = ctx.createRadialGradient(bx, by, 0, bx, by, r);
+    grad.addColorStop(0,   `rgba(${cr},${cg},${cb},${alpha})`);
+    grad.addColorStop(0.6, `rgba(${cr},${cg},${cb},${alpha * 0.6})`);
+    grad.addColorStop(1,   `rgba(${cr},${cg},${cb},0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.ellipse(bx, by, r, r * blob.aspect, 0, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Large base storm layer
+  if (intensity > 0.3) {
+    const baseA = clamp((intensity - 0.3) / 0.7, 0, 1) * 0.5;
+    const bg = ctx.createRadialGradient(W * 0.5, 0, 0, W * 0.5, 0, W * 0.9);
+    bg.addColorStop(0, `rgba(12,12,18,${baseA})`);
+    bg.addColorStop(0.6, `rgba(6,6,10,${baseA * 0.8})`);
+    bg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H * 0.65);
+  }
+}
+
+function drawMountains(mood, stormIntensity) {
+  const HOR = H * 0.60;
+
+  // Back range
+  {
+    const peaks = getBackMountainPath();
+    ctx.beginPath();
+    ctx.moveTo(peaks[0][0] * W, peaks[0][1] * H);
+    for (let i = 1; i < peaks.length - 2; i++) {
+      const nx = peaks[i+1][0] * W;
+      const ny = peaks[i+1][1] * H;
+      const cx = (peaks[i][0] * W + nx) * 0.5;
+      const cy = (peaks[i][1] * H + ny) * 0.5;
+      ctx.quadraticCurveTo(peaks[i][0] * W, peaks[i][1] * H, cx, cy);
+    }
+    ctx.lineTo(peaks[peaks.length-2][0] * W, peaks[peaks.length-2][1] * H);
+    ctx.lineTo(peaks[peaks.length-1][0] * W, peaks[peaks.length-1][1] * H);
+    ctx.closePath();
+    ctx.fillStyle = moodColorStr(C.mtBack, mood);
+    ctx.fill();
+  }
+
+  // Snow caps at high mood
+  if (mood > 0.5) {
+    const snowA = smoothstep(0.5, 0.8, mood);
+    ctx.globalAlpha = snowA * 0.85;
+    const peaks = getBackMountainPath();
+    // Draw small white ellipses on the 4 highest peaks
+    const topPeaks = [3,5,7,9]; // indices of high peaks
+    topPeaks.forEach(idx => {
+      if (!peaks[idx]) return;
+      const px = peaks[idx][0] * W;
+      const py = peaks[idx][1] * H;
+      ctx.fillStyle = '#f0f0f0';
+      ctx.beginPath();
+      ctx.ellipse(px, py + 5, W * 0.018, H * 0.015, 0, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  // Front range
+  {
+    const peaks = getFrontMountainPath();
+    ctx.beginPath();
+    ctx.moveTo(peaks[0][0] * W, peaks[0][1] * H);
+    for (let i = 1; i < peaks.length - 2; i++) {
+      const nx = peaks[i+1][0] * W;
+      const ny = peaks[i+1][1] * H;
+      const cx = (peaks[i][0] * W + nx) * 0.5;
+      const cy = (peaks[i][1] * H + ny) * 0.5;
+      ctx.quadraticCurveTo(peaks[i][0] * W, peaks[i][1] * H, cx, cy);
+    }
+    ctx.lineTo(peaks[peaks.length-2][0] * W, peaks[peaks.length-2][1] * H);
+    ctx.lineTo(peaks[peaks.length-1][0] * W, peaks[peaks.length-1][1] * H);
+    ctx.closePath();
+    ctx.fillStyle = moodColorStr(C.mtFront, mood);
+    ctx.fill();
+  }
+
+  // Atmospheric mountain haze at low mood
+  if (stormIntensity > 0.1) {
+    const hazA = stormIntensity * 0.70;
+    const hg = ctx.createLinearGradient(0, H * 0.42, 0, H * 0.65);
+    hg.addColorStop(0, 'rgba(10,12,20,0)');
+    hg.addColorStop(1, `rgba(10,12,20,${hazA})`);
+    ctx.fillStyle = hg;
+    ctx.fillRect(0, H * 0.42, W, H * 0.23);
+  }
+}
+
+function drawHills(mood, t) {
+  const hillColors = [
+    moodColorStr(C.hill1, mood),
+    moodColorStr(C.hill2, mood),
+    moodColorStr(C.hill3, mood),
+  ];
+
+  // Hill layer 1 — back
+  ctx.beginPath();
+  ctx.moveTo(0, H * 0.72);
+  ctx.bezierCurveTo(W*0.1, H*0.60, W*0.25, H*0.62, W*0.35, H*0.615);
+  ctx.bezierCurveTo(W*0.45, H*0.61, W*0.55, H*0.59, W*0.65, H*0.605);
+  ctx.bezierCurveTo(W*0.75, H*0.62, W*0.9,  H*0.60, W,      H*0.615);
+  ctx.lineTo(W, H*0.72);
+  ctx.closePath();
+  ctx.fillStyle = hillColors[0];
+  ctx.fill();
+
+  // Hill layer 2
+  ctx.beginPath();
+  ctx.moveTo(0, H * 0.72);
+  ctx.bezierCurveTo(W*0.08, H*0.63, W*0.22, H*0.65, W*0.33, H*0.635);
+  ctx.bezierCurveTo(W*0.44, H*0.62, W*0.57, H*0.63, W*0.68, H*0.625);
+  ctx.bezierCurveTo(W*0.80, H*0.62, W*0.92, H*0.63, W,      H*0.628);
+  ctx.lineTo(W, H*0.72);
+  ctx.closePath();
+  ctx.fillStyle = hillColors[1];
+  ctx.fill();
+
+  // Hill layer 3 — front
+  ctx.beginPath();
+  ctx.moveTo(0, H * 0.72);
+  ctx.bezierCurveTo(W*0.12, H*0.665, W*0.28, H*0.67, W*0.40, H*0.66);
+  ctx.bezierCurveTo(W*0.52, H*0.65,  W*0.60, H*0.665, W*0.72, H*0.66);
+  ctx.bezierCurveTo(W*0.84, H*0.655, W*0.94, H*0.665, W,      H*0.665);
+  ctx.lineTo(W, H*0.72);
+  ctx.closePath();
+  ctx.fillStyle = hillColors[2];
+  ctx.fill();
+}
+
+function drawTree(x, yBase, scale, mood, leanAngle) {
+  const fillColor  = moodColorStr(C.tree, mood);
+  const shadowColor = moodColorStr(C.treeShadow, mood);
+
+  ctx.save();
+  if (leanAngle !== 0) {
+    ctx.translate(x, yBase);
+    ctx.rotate(leanAngle);
+    ctx.translate(-x, -yBase);
+  }
+
+  const h1 = H * 0.075 * scale;
+  const h2 = H * 0.075 * scale;
+  const h3 = H * 0.080 * scale;
+  const w1 = W * 0.040 * scale;
+  const w2 = W * 0.050 * scale;
+  const w3 = W * 0.060 * scale;
+
+  // Three crown layers bottom to top
+  ctx.fillStyle = shadowColor;
+  ctx.beginPath();
+  ctx.moveTo(x, yBase - h1 - h2 - h3 + h3*0.3);
+  ctx.lineTo(x - w3*0.5, yBase - h1 - h2 + h2*0.3);
+  ctx.lineTo(x + w3*0.5, yBase - h1 - h2 + h2*0.3);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = fillColor;
+  ctx.beginPath();
+  ctx.moveTo(x, yBase - h1 - h2 - h3);
+  ctx.lineTo(x - w3*0.45, yBase - h1 - h2 + h3*0.3);
+  ctx.lineTo(x + w3*0.45, yBase - h1 - h2 + h3*0.3);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = shadowColor;
+  ctx.beginPath();
+  ctx.moveTo(x, yBase - h1 - h2 + h3*0.1);
+  ctx.lineTo(x - w2*0.5, yBase - h1 + h2*0.3);
+  ctx.lineTo(x + w2*0.5, yBase - h1 + h2*0.3);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = fillColor;
+  ctx.beginPath();
+  ctx.moveTo(x, yBase - h1 - h2 + h3*0.0);
+  ctx.lineTo(x - w2*0.52, yBase - h1 + h2*0.25);
+  ctx.lineTo(x + w2*0.52, yBase - h1 + h2*0.25);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = shadowColor;
+  ctx.beginPath();
+  ctx.moveTo(x, yBase - h1 + h2*0.1);
+  ctx.lineTo(x - w1*0.55, yBase + h1*0.3);
+  ctx.lineTo(x + w1*0.55, yBase + h1*0.3);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = fillColor;
+  ctx.beginPath();
+  ctx.moveTo(x, yBase - h1 + h2*0.0);
+  ctx.lineTo(x - w1*0.6, yBase + h1*0.25);
+  ctx.lineTo(x + w1*0.6, yBase + h1*0.25);
+  ctx.closePath();
+  ctx.fill();
+
+  // Trunk
+  const trunkColor = lerpColorHex('#1a0d05', '#3a5a30', mood);
+  ctx.fillStyle = trunkColor;
+  ctx.fillRect(x - W*0.004*scale, yBase, W*0.008*scale, H*0.025*scale);
+
+  ctx.restore();
+}
+
+function drawTrees(mood, t, stormIntensity) {
+  const leftXFracs  = [0.04, 0.09, 0.14, 0.20, 0.27, 0.33, 0.38];
+  const rightXFracs = [0.62, 0.68, 0.73, 0.79, 0.85, 0.91];
+  const yBase = H * 0.68;
+
+  const swayAmt = 1.5 + stormIntensity * 7;
+
+  leftXFracs.forEach((xf, i) => {
+    const x = W * xf;
+    const scale = 0.85 + (1 - Math.abs(xf - 0.21) / 0.21) * 0.15;
+    const sway = Math.sin(t * 0.03 + i * 0.8) * swayAmt * (Math.PI / 180);
+    // Chaos lean for trees 2 and 5 at low mood
+    let lean = sway;
+    if (mood < 0.2 && (i === 1 || i === 4)) {
+      lean += (i === 1 ? 0.14 : -0.22) * (1 - mood/0.2);
+    }
+    drawTree(x, yBase, scale, mood, lean);
+  });
+
+  rightXFracs.forEach((xf, i) => {
+    const x = W * xf;
+    const scale = 0.80 + i * 0.04;
+    const sway = Math.sin(t * 0.03 + (i + 7) * 0.8) * swayAmt * (Math.PI / 180);
+    drawTree(x, yBase, scale, mood, sway);
+  });
+}
+
+function drawFields(mood) {
+  const grassColor = moodColorStr(C.grass, mood);
+  const HOR = H * 0.60;
+
+  // Road edges
+  const roadLeftFar  = { x: W*0.47, y: H*0.60 };
+  const roadRightFar = { x: W*0.53, y: H*0.60 };
+  const roadLeftNear = { x: W*0.30, y: H      };
+  const roadRightNear= { x: W*0.70, y: H      };
+
+  // Left field
+  ctx.beginPath();
+  ctx.moveTo(0, H*0.60);
+  ctx.lineTo(roadLeftFar.x, roadLeftFar.y);
+  ctx.lineTo(roadLeftNear.x, roadLeftNear.y);
+  ctx.lineTo(0, H);
+  ctx.closePath();
+  ctx.fillStyle = grassColor;
+  ctx.fill();
+
+  // Grass banding (high mood)
+  if (mood > 0.5) {
+    const bandA = smoothstep(0.5, 0.9, mood) * 0.12;
+    for (let bi = 0; bi < 4; bi++) {
+      const by = H * (0.65 + bi * 0.09);
+      ctx.globalAlpha = bandA;
+      ctx.fillStyle = bi % 2 === 0 ? '#90d078' : '#6aaa58';
+      ctx.fillRect(0, by, W * 0.30 + (H - by) / (H - H*0.60) * (W*0.47 - W*0.30), 4);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // Right field
+  ctx.beginPath();
+  ctx.moveTo(roadRightFar.x, roadRightFar.y);
+  ctx.lineTo(W, H*0.60);
+  ctx.lineTo(W, H);
+  ctx.lineTo(roadRightNear.x, roadRightNear.y);
+  ctx.closePath();
+  ctx.fillStyle = grassColor;
+  ctx.fill();
+
+  if (mood > 0.5) {
+    const bandA = smoothstep(0.5, 0.9, mood) * 0.12;
+    for (let bi = 0; bi < 4; bi++) {
+      const by = H * (0.65 + bi * 0.09);
+      ctx.globalAlpha = bandA;
+      ctx.fillStyle = bi % 2 === 0 ? '#90d078' : '#6aaa58';
+      const leftX = W*0.53 + (H - by) / (H - H*0.60) * (W*0.70 - W*0.53);
+      ctx.fillRect(leftX, by, W - leftX, 4);
+      ctx.globalAlpha = 1;
+    }
+  }
+}
+
+function drawRoad(mood, t) {
+  const roadColor = moodColorStr(C.road, mood);
+
+  // Trapezoid
+  ctx.beginPath();
+  ctx.moveTo(W*0.30, H);
+  ctx.lineTo(W*0.70, H);
+  ctx.lineTo(W*0.53, H*0.60);
+  ctx.lineTo(W*0.47, H*0.60);
+  ctx.closePath();
+  ctx.fillStyle = roadColor;
+  ctx.fill();
+
+  // Wet sheen at low mood
+  if (mood < 0.3) {
+    const wetA = (0.3 - mood) / 0.3 * 0.35;
+    const wg = ctx.createLinearGradient(0, H, 0, H*0.60);
+    wg.addColorStop(0, `rgba(50,70,120,${wetA})`);
+    wg.addColorStop(1, 'rgba(50,70,120,0)');
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(W*0.30, H);
+    ctx.lineTo(W*0.70, H);
+    ctx.lineTo(W*0.53, H*0.60);
+    ctx.lineTo(W*0.47, H*0.60);
+    ctx.closePath();
+    ctx.fillStyle = wg;
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Road edge lines
+  const edgeA = lerp(0.3, 0.6, mood);
+  ctx.strokeStyle = `rgba(255,255,255,${edgeA})`;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(W*0.30, H); ctx.lineTo(W*0.47, H*0.60);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(W*0.70, H); ctx.lineTo(W*0.53, H*0.60);
+  ctx.stroke();
+
+  // Center dashes
+  const dashA = lerp(0.3, 0.7, mood);
+  const dashes = [
+    { y: H*0.98, w: 22, h: 32 },
+    { y: H*0.90, w: 16, h: 22 },
+    { y: H*0.82, w: 11, h: 16 },
+    { y: H*0.74, w:  8, h: 11 },
+    { y: H*0.68, w:  5, h:  7 },
+    { y: H*0.63, w:  3, h:  4 },
+  ];
+  ctx.fillStyle = `rgba(255,255,255,${dashA})`;
+  dashes.forEach(d => {
+    // Centerline x at given y: lerp from W*0.5 at horizon to W*0.5 at base (it's always 0.5 for symmetric road)
+    const cx = W * 0.5;
+    ctx.fillRect(cx - d.w/2, d.y - d.h/2, d.w, d.h);
+  });
+}
+
+function drawGuardrail(mood) {
+  const tilt = mood < 0.2 ? (0.2 - mood) / 0.2 * 0.03 : 0;
+  const color = `rgba(${Math.round(lerp(80,192,mood))},${Math.round(lerp(80,192,mood))},${Math.round(lerp(80,192,mood))},0.65)`;
+
+  ctx.save();
+  ctx.strokeStyle = color;
+
+  // 3 beam passes along left road edge
+  for (let beam = 0; beam < 3; beam++) {
+    const offset = beam * 3;
+    ctx.lineWidth = 2 - beam * 0.4;
+    ctx.beginPath();
+    ctx.moveTo(W*0.30 + offset, H       + offset * tilt * 50);
+    ctx.lineTo(W*0.47 + offset * tilt * 10, H*0.60 + offset * tilt * 10);
+    ctx.stroke();
+  }
+
+  // Posts
+  const postXs = [W*0.31, W*0.345, W*0.385, W*0.418, W*0.445];
+  const postYBases = [H*0.95, H*0.86, H*0.77, H*0.70, H*0.64];
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  postXs.forEach((px, i) => {
+    const py = postYBases[i];
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px - 1, py - H*0.03);
+    ctx.stroke();
+  });
+
+  ctx.restore();
+}
+
+function drawPowerPoles(mood, t) {
+  const poleCol = moodColorStr(C.poleColor, mood);
+  const broken  = mood < 0.2;
+
+  // 4 poles receding: near to far
+  const poles = [
+    { x: W*0.75, yBot: H*0.95, yTop: H*0.65, w: 4, crossW: W*0.045 },
+    { x: W*0.70, yBot: H*0.86, yTop: H*0.62, w: 3, crossW: W*0.034 },
+    { x: W*0.65, yBot: H*0.78, yTop: H*0.60, w: 2.5, crossW: W*0.026 },
+    { x: W*0.60, yBot: H*0.72, yTop: H*0.59, w: 1.5, crossW: W*0.018 },
+  ];
+
+  ctx.strokeStyle = poleCol;
+
+  poles.forEach((pole, pi) => {
+    ctx.save();
+    let poleAngle = 0;
+    if (broken && pi <= 1) {
+      poleAngle = (pi === 0 ? 0.44 : 0.18) * (1 - mood / 0.2);
+    }
+
+    ctx.translate(pole.x, pole.yBot);
+    ctx.rotate(poleAngle);
+    ctx.translate(-pole.x, -pole.yBot);
+
+    const alpha = 1 - pi * 0.18;
+    ctx.globalAlpha = alpha;
+    ctx.lineWidth = pole.w;
+    ctx.beginPath();
+    ctx.moveTo(pole.x, pole.yBot);
+    ctx.lineTo(pole.x, pole.yTop);
+    ctx.stroke();
+
+    // Crossbar
+    ctx.lineWidth = pole.w * 0.75;
+    const cb1y = pole.yTop + (pole.yBot - pole.yTop) * 0.18;
+    ctx.beginPath();
+    ctx.moveTo(pole.x - pole.crossW, cb1y);
+    ctx.lineTo(pole.x + pole.crossW, cb1y);
+    ctx.stroke();
+
+    // Second crossbar
+    const cb2y = pole.yTop + (pole.yBot - pole.yTop) * 0.28;
+    ctx.lineWidth = pole.w * 0.6;
+    ctx.beginPath();
+    ctx.moveTo(pole.x - pole.crossW*0.75, cb2y);
+    ctx.lineTo(pole.x + pole.crossW*0.75, cb2y);
+    ctx.stroke();
+
+    ctx.restore();
+  });
+
+  // Wires (catenary beziers)
+  const wireA = lerp(0.2, 0.55, mood);
+  ctx.strokeStyle = `rgba(60,60,60,${wireA})`;
+  ctx.lineWidth = 1;
+  ctx.globalAlpha = 1;
+
+  for (let w = 0; w < 2; w++) {
+    for (let pi = 0; pi < poles.length - 1; pi++) {
+      const p1 = poles[pi];
+      const p2 = poles[pi+1];
+      const wy1 = p1.yTop + (p1.yBot - p1.yTop) * (0.18 + w * 0.10);
+      const wy2 = p2.yTop + (p2.yBot - p2.yTop) * (0.18 + w * 0.10);
+      const sag = (p1.x - p2.x) * 0.25;
+
+      if (broken && pi === 0) {
+        // Dangling wire
+        ctx.beginPath();
+        ctx.moveTo(p1.x, wy1);
+        ctx.bezierCurveTo(
+          p1.x + (p2.x - p1.x)*0.3, wy1 + sag * 1.5,
+          p1.x + (p2.x - p1.x)*0.5, wy2 + sag * 2.5,
+          p1.x + (p2.x - p1.x)*0.55, wy2 + sag * 2.0
+        );
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(p1.x, wy1);
+        ctx.quadraticCurveTo(
+          (p1.x + p2.x) * 0.5, (wy1 + wy2) * 0.5 + sag * 0.5,
+          p2.x, wy2
+        );
+        ctx.stroke();
+      }
+    }
+  }
+
+  ctx.globalAlpha = 1;
+}
+
+function drawHouse(mood, t) {
+  const hx = W * 0.22;
+  const hy = H * 0.57;
+  const hw = W * 0.04;
+  const hh = H * 0.065;
+  const wallColor = moodColorStr(C.houseWall, mood);
+  const roofColor = moodColorStr(C.houseRoof, mood);
+
+  ctx.globalAlpha = 0.85;
+
+  // Walls
+  ctx.fillStyle = wallColor;
+  ctx.fillRect(hx - hw*0.5, hy - hh, hw, hh);
+
+  // Roof triangle
+  ctx.fillStyle = roofColor;
+  ctx.beginPath();
+  ctx.moveTo(hx, hy - hh - H*0.05);
+  ctx.lineTo(hx - hw*0.65, hy - hh);
+  ctx.lineTo(hx + hw*0.65, hy - hh);
+  ctx.closePath();
+  ctx.fill();
+
+  // Window (glows at low mood)
+  const winA = mood > 0.3 ? 0.6 : lerp(0.9, 0.6, mood/0.3);
+  const winColor = mood > 0.3 ? '#f0d070' : `rgba(255,180,80,${winA})`;
+  ctx.fillStyle = winColor;
+  ctx.globalAlpha = winA * 0.85;
+  ctx.fillRect(hx - hw*0.28, hy - hh*0.70, hw*0.22, hw*0.22);
+  ctx.fillRect(hx + hw*0.06, hy - hh*0.70, hw*0.22, hw*0.22);
+
+  ctx.globalAlpha = 1;
+
+  // Fire at very low mood
+  if (mood < 0.15) {
+    const fireI = (0.15 - mood) / 0.15;
+    const fcy = hy - hh - H*0.04;
+    const flicker = Math.sin(t * 0.008) * 0.15;
+
+    // Glow
+    const glow = ctx.createRadialGradient(hx, fcy, 0, hx, fcy, hw * 2.5);
+    glow.addColorStop(0, `rgba(255,80,0,${0.3 * fireI})`);
+    glow.addColorStop(1, 'rgba(255,80,0,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(hx, fcy, hw * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Flame blobs
+    const flames = [
+      { ox: 0,       oy: 0,       rx: hw*0.55, ry: hw*0.40, c: '#FF6600', a: 0.8  },
+      { ox: 0,       oy: -hw*0.1, rx: hw*0.30, ry: hw*0.28, c: '#FFCC00', a: 0.9  },
+      { ox: -hw*0.2, oy: -hw*0.05,rx: hw*0.18, ry: hw*0.33, c: '#FF4400', a: 0.7  },
+      { ox:  hw*0.2, oy: -hw*0.08,rx: hw*0.15, ry: hw*0.27, c: '#FF8800', a: 0.75 },
+    ];
+    flames.forEach((fl, fi) => {
+      const sc = (1 + flicker * (fi % 2 === 0 ? 1 : -1)) * fireI;
+      ctx.globalAlpha = fl.a * fireI;
+      ctx.fillStyle = fl.c;
+      ctx.beginPath();
+      ctx.ellipse(hx + fl.ox, fcy + fl.oy, fl.rx * sc, fl.ry * sc, 0, 0, Math.PI*2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawFlood(mood, t) {
+  const floodI = clamp((0.25 - mood) / 0.25, 0, 1);
+
+  // Main water ellipse
+  const fg = ctx.createRadialGradient(W*0.5, H, 0, W*0.5, H, W*0.65);
+  fg.addColorStop(0, `rgba(20,40,80,${0.8 * floodI})`);
+  fg.addColorStop(0.6, `rgba(10,25,55,${0.65 * floodI})`);
+  fg.addColorStop(1, 'rgba(10,25,55,0)');
+  ctx.fillStyle = fg;
+  ctx.beginPath();
+  ctx.ellipse(W*0.5, H, W*0.65, H*0.08 * floodI, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Sine wave surface
+  const waveY = H * (1.0 - floodI * 0.12);
+  const waveA = floodI * 0.6;
+  ctx.strokeStyle = `rgba(60,100,180,${waveA})`;
+  ctx.lineWidth = 1.5;
+
+  for (let wave = 0; wave < 3; wave++) {
+    ctx.beginPath();
+    const wy = waveY + wave * H*0.015;
+    ctx.moveTo(0, wy);
+    for (let wx = 0; wx <= W; wx += 20) {
+      const wy2 = wy + Math.sin((wx / W * 8 + t * 0.005 + wave * 1.2)) * 2.5;
+      ctx.lineTo(wx, wy2);
+    }
+    ctx.stroke();
+  }
+
+  // Reflection dots
+  if (floodI > 0.3) {
+    const dotA = floodI * 0.25;
+    for (let d = 0; d < 12; d++) {
+      const dx = W * (0.1 + frand(d * 13 + 7) * 0.8);
+      const dy = waveY + frand(d * 13 + 8) * H * floodI * 0.08;
+      const dr = 1 + frand(d * 13 + 9) * 2;
+      ctx.globalAlpha = dotA;
+      ctx.fillStyle = '#c0d8ff';
+      ctx.beginPath();
+      ctx.arc(dx, dy, dr, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+function drawRain(mood, t) {
+  const rawI  = clamp((0.55 - mood) / 0.55, 0, 1);
+  const rainI = Math.pow(rawI, 0.8);
+  const count = Math.floor(rainI * 700);
+
+  ensureRainCount(count);
+
+  if (count === 0) return;
+
+  const extreme = mood < 0.1;
+  const heavy   = mood < 0.25;
+
+  // Update particles
+  rainParticles.forEach(p => {
+    p.x += Math.sin(p.angle) * p.speed;
+    p.y += Math.cos(p.angle) * p.speed;
+    if (p.y > H + 40 || p.x > W + 40) {
+      const np = spawnRain(false);
+      Object.assign(p, np);
+      p.x = Math.random() * W * 1.1 - W * 0.05;
+      p.y = -40;
+    }
+  });
+
+  // First pass
+  ctx.save();
+  ctx.globalAlpha = heavy ? 0.7 : 0.5;
+  const rainR = heavy ? 140 : 180;
+  const rainG = heavy ? 160 : 200;
+  const rainB = heavy ? 200 : 230;
+
+  rainParticles.forEach(p => {
+    if (p.streak && extreme) {
+      ctx.strokeStyle = `rgba(240,245,255,${p.opacity * 1.2})`;
+      ctx.lineWidth = 2;
+    } else {
+      ctx.strokeStyle = `rgba(${rainR},${rainG},${rainB},${p.opacity})`;
+      ctx.lineWidth = 0.5 + (heavy ? 0.8 : 0);
+    }
+    const len = p.streak ? 50 : p.length;
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.lineTo(p.x + Math.sin(p.angle) * len, p.y + Math.cos(p.angle) * len);
+    ctx.stroke();
+  });
+  ctx.restore();
+
+  // Second pass (motion blur at extreme)
+  if (extreme) {
+    ctx.save();
+    ctx.globalAlpha = 0.35;
+    rainParticles.forEach(p => {
+      ctx.strokeStyle = `rgba(${rainR},${rainG},${rainB},${p.opacity})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(p.x + 1, p.y);
+      ctx.lineTo(p.x + 1 + Math.sin(p.angle) * p.length, p.y + Math.cos(p.angle) * p.length);
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
+}
+
+function drawLightningBolt(points, ageFrac) {
+  if (!points || points.length < 2) return;
+  const alpha = Math.max(0, 1 - ageFrac * 1.4);
+
+  // Thick outer glow
+  ctx.save();
+  ctx.shadowColor = '#c8e8ff';
+  ctx.shadowBlur  = 40;
+  ctx.strokeStyle = `rgba(200,230,255,${alpha * 0.4})`;
+  ctx.lineWidth   = 5;
+  ctx.beginPath();
+  ctx.moveTo(points[0][0], points[0][1]);
+  for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+  ctx.stroke();
+
+  // Core bright line
+  ctx.shadowBlur  = 25;
+  ctx.strokeStyle = `rgba(255,255,255,${alpha * 0.9})`;
+  ctx.lineWidth   = 2;
+  ctx.beginPath();
+  ctx.moveTo(points[0][0], points[0][1]);
+  for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ═══════════════════════════════════════════════════════════
+// MOOD LABEL TEXT
+// ═══════════════════════════════════════════════════════════
+function getMoodText(mood) {
+  if (mood > 0.85) return "We want to talk to you";
+  if (mood > 0.70) return "Looking promising...";
+  if (mood > 0.55) return "It could go either way";
+  if (mood > 0.40) return "The odds are not good";
+  if (mood > 0.25) return "The outlook is grim";
+  if (mood > 0.10) return "You have chosen poorly";
+  return "You have chosen poorly";
+}
+
+function getStatusText(mood) {
+  if (mood > 0.85) return { main: "We'd love to talk to you about your role", sub: "The landscape agrees. Let's have a conversation." };
+  if (mood > 0.70) return { main: "Looking like a strong candidate",           sub: "Keep pushing — you're almost there." };
+  if (mood > 0.55) return { main: "It could go either way",                    sub: "The sky is undecided. So are we." };
+  if (mood > 0.40) return { main: "The odds are not in your favour",           sub: "Storm clouds are forming." };
+  if (mood > 0.25) return { main: "This isn't going well",                     sub: "The storm has arrived." };
+  if (mood > 0.10) return { main: "You have chosen poorly",                    sub: "The world is ending. So is your application." };
+  return { main: "You have chosen poorly",                                      sub: "Indiana Jones warned you." };
+}
+
+// ═══════════════════════════════════════════════════════════
+// QUESTIONS UI
+// ═══════════════════════════════════════════════════════════
+const answers    = new Array(questions.length).fill(null);
+let targetMood   = 0.75;
+let animMood     = 0.75;
+
+const scrollEl = document.getElementById('questions-scroll');
+
+questions.forEach((q, qi) => {
+  const item = document.createElement('div');
+  item.className = 'question-item';
+
+  const label = document.createElement('div');
+  label.className = 'question-label';
+  label.textContent = `Question ${qi + 1}`;
+
+  const text = document.createElement('div');
+  text.className = 'question-text';
+  text.textContent = q.text;
+
+  const row  = document.createElement('div');
+  row.className = 'rating-row';
+
+  const lowLabel = document.createElement('span');
+  lowLabel.className = 'rating-pole-label';
+  lowLabel.textContent = q.low;
+
+  const btns = document.createElement('div');
+  btns.className = 'rating-buttons';
+
+  for (let v = 1; v <= 5; v++) {
+    const btn = document.createElement('button');
+    btn.className = 'rating-btn';
+    btn.textContent = v;
+    btn.dataset.q = qi;
+    btn.dataset.v = v;
+    btn.addEventListener('click', () => onRate(qi, v));
+    btns.appendChild(btn);
+  }
+
+  const highLabel = document.createElement('span');
+  highLabel.className = 'rating-pole-label right';
+  highLabel.textContent = q.high;
+
+  row.appendChild(lowLabel);
+  row.appendChild(btns);
+  row.appendChild(highLabel);
+
+  item.appendChild(label);
+  item.appendChild(text);
+  item.appendChild(row);
+  scrollEl.appendChild(item);
+});
+
+// Convert a raw 1-5 answer to a 0-1 fit score based on scoring type
+function fitScore(value, scoring) {
+  const norm = (value - 1) / 4; // 0 to 1
+  if (scoring === 'standard') return norm;
+  if (scoring === 'inverted') return 1 - norm;
+  if (scoring === 'bell') {
+    // 3 = perfect (1.0), 1 or 5 = worst (0.0)
+    const dist = Math.abs(value - 3) / 2;
+    return 1 - dist;
+  }
+  return norm;
+}
+
+function onRate(qi, value) {
+  answers[qi] = value;
+
+  // Color the selected button based on its fit contribution
+  const fit = fitScore(value, questions[qi].scoring);
+  const allBtns = scrollEl.querySelectorAll(`.rating-btn[data-q="${qi}"]`);
+  allBtns.forEach(btn => {
+    btn.className = 'rating-btn';
+    if (parseInt(btn.dataset.v) === value) {
+      // Map fit to a color class: 0→1 (bad), 0.5→3 (neutral), 1→5 (good)
+      const colorClass = Math.round(fit * 4) + 1;
+      btn.classList.add(`selected-${colorClass}`);
+    }
+  });
+
+  const answered = answers.map((a, i) => a !== null ? fitScore(a, questions[i].scoring) : null).filter(a => a !== null);
+  if (answered.length > 0) {
+    const avg = answered.reduce((s, a) => s + a, 0) / answered.length;
+    // Compress range: mostly pleasant, only goes chaotic when many negatives stack
+    // 1 answer can't tank it. With all 7 negative it reaches ~0.15
+    const answerRatio = answered.length / questions.length;
+    // Blend toward 0.7 (pleasant default) when few answers, toward true avg when many
+    const blendedAvg = lerp(0.7, avg, Math.pow(answerRatio, 0.5));
+    targetMood = clamp(blendedAvg, 0.05, 0.95);
+  }
+
+  updateStatusBox();
+}
+
+function updateStatusBox() {
+  const answered = answers.filter(a => a !== null);
+  const box = document.getElementById('status-box');
+  if (answered.length === 0) { box.classList.remove('visible'); return; }
+  box.classList.add('visible');
+
+  const st = getStatusText(targetMood);
+  document.getElementById('status-text').textContent    = st.main;
+  document.getElementById('status-subtext').textContent = st.sub;
+
+  const t = targetMood;
+  let boxBg;
+  if      (t < 0.25) boxBg = 'rgba(229,57,53,0.08)';
+  else if (t < 0.5)  boxBg = 'rgba(244,81,30,0.07)';
+  else if (t < 0.65) boxBg = 'rgba(100,120,130,0.06)';
+  else if (t < 0.85) boxBg = 'rgba(74,160,224,0.08)';
+  else               boxBg = 'rgba(46,125,50,0.08)';
+  box.style.background = boxBg;
+}
+
+// ═══════════════════════════════════════════════════════════
+// MAIN ANIMATION LOOP
+// ═══════════════════════════════════════════════════════════
+let t = 0;
+let lastLabelText = '';
+
+function loop() {
+  t++;
+  animMood += (targetMood - animMood) * 0.03;
+
+  drawLandscape(animMood, t);
+
+  // Lightning timer
+  if (animMood < 0.35) {
+    lightningTimer--;
+    if (lightningTimer <= 0) {
+      triggerLightningBolt();
+      const speedMult = clamp((0.35 - animMood) / 0.35, 0, 1);
+      lightningTimer = Math.floor(90 + Math.random() * 130 * (1 - speedMult * 0.6));
+    }
+  }
+
+  // Mood label (update only when changed to avoid layout thrash)
+  const lt = getMoodText(animMood);
+  if (lt !== lastLabelText) {
+    moodLabel.textContent = lt;
+    lastLabelText = lt;
+  }
+
+  requestAnimationFrame(loop);
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+resizeCanvas();
+loop();
+</script>
+</body>
+</html>
